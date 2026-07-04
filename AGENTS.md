@@ -7,6 +7,12 @@
 - Gradually commit finished task as a checkpoint. It should be meaningful work and it would be scoped to specific chunk of work. Never commit everything including unrelated things in one commit.
 - Only reviewed changes may be committed. Route **every** commit — inside super-exec or any ad-hoc / out-of-workflow commit — through `/se-commit`; never `git commit` directly. `/se-commit` is the enforcement **gate**, not the reviewer: before committing, the committer must have reviewed the staged files (or, when there is no review evidence — e.g. an ad-hoc checkpoint commit outside `/se-exec`'s per-task build loop — spawned one or two fresh reviewer subagents over the staged diff, applying `/se-review`'s severity model and resolving Critical/Important). `/se-commit` refuses/stops if the staged paths were not reviewed; the committer, who holds the change's intent, does the actual reviewing. Once fixed, meaning that new code hasn't been reviewed so need to trigger review again.
 
+## Verification & UI Testing
+
+The `peekbar-ui-testing` skill (`.cursor/skills/peekbar-ui-testing/`) drives and asserts PeekBar's real menu-bar UI (toggle click, Ctrl-click context menu, ⌘-drag reposition, Preferences window) through the `macos_automator` MCP. Use it to verify menu-bar behavior against the running app.
+
+During planning, always consider this skill for the verification step: when a task touches the status item, hiding/collapse, the context menu, ⌘-drag ordering, or the Preferences window, integrate concrete `peekbar-ui-testing` checks into the plan as its acceptance/verification criteria (alongside unit tests), rather than relying on manual checking.
+
 ## Design Context
 
 PeekBar is a native macOS menu-bar utility. Design register is **product** (design serves the app; be indistinguishable from macOS System Settings).
