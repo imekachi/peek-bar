@@ -26,4 +26,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settings.hasLaunchedBefore = true
         }
     }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // Restore any hidden icons on quit. Removing the status items on exit already reclaims
+        // the space, but resetting the separator first guarantees icons reappear immediately.
+        statusBarController?.expandForShutdown()
+        StartupLog.emit("PeekBar: terminating — icons restored")
+    }
 }

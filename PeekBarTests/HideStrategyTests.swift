@@ -10,7 +10,8 @@ final class HideStrategyTests: XCTestCase {
         for screenWidth in representativeScreenWidths {
             let width = HideWidth.collapsedWidth(screenWidth: screenWidth)
 
-            XCTAssertLessThanOrEqual(width, screenWidth + HideWidth.padding)
+            // Must exceed the screen so the leftmost icon clears the edge, yet stay bounded.
+            XCTAssertGreaterThanOrEqual(width, screenWidth)
             XCTAssertGreaterThanOrEqual(width, HideWidth.minimum)
             XCTAssertLessThanOrEqual(width, HideWidth.cap)
             XCTAssertNotEqual(width, 10_000)

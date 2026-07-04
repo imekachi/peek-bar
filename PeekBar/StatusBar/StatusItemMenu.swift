@@ -59,6 +59,9 @@ enum StatusItemMenu {
     }
 
     @objc func showAbout(_ sender: Any?) {
+      // As an .accessory app PeekBar isn't active, so the panel would open behind other
+      // windows (or not at all). Activate first, then bring the standard panel to front.
+      NSApp.activate(ignoringOtherApps: true)
       NSApp.orderFrontStandardAboutPanel(nil)
     }
 
