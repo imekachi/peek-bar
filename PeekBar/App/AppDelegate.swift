@@ -3,7 +3,7 @@ import AppKit
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = SettingsStore()
-    private let preferencesController = PreferencesWindowController()
+    private lazy var preferencesController = PreferencesWindowController(settings: settings)
     private var statusBarController: StatusBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -22,7 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if !settings.hasLaunchedBefore {
             preferencesController.show()
-            StartupLog.emit("PeekBar: preferences auto-opened (first launch)")
+            StartupLog.emit("PeekBar: settings auto-opened (first launch)")
             settings.hasLaunchedBefore = true
         }
     }

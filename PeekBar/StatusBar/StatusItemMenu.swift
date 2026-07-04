@@ -9,13 +9,14 @@ enum StatusItemMenu {
     let target = Actions(preferencesController: preferencesController)
     let menu = NSMenu()
 
-    let preferences = NSMenuItem(
-      title: "Preferences",
-      action: #selector(Actions.openPreferences(_:)),
-      keyEquivalent: ""
+    // ⌘, is best-effort for an LSUIElement accessory app (no main menu bar); it only works while this menu is key.
+    let settings = NSMenuItem(
+      title: "Settings",
+      action: #selector(Actions.openSettings(_:)),
+      keyEquivalent: ","
     )
-    preferences.target = target
-    menu.addItem(preferences)
+    settings.target = target
+    menu.addItem(settings)
 
     let checkForUpdates = NSMenuItem(
       title: "Check for updates…",
@@ -54,7 +55,7 @@ enum StatusItemMenu {
       self.preferencesController = preferencesController
     }
 
-    @objc func openPreferences(_ sender: Any?) {
+    @objc func openSettings(_ sender: Any?) {
       preferencesController.show()
     }
 

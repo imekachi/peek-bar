@@ -10,8 +10,8 @@ Drive and assert PeekBar's menu-bar UI from any agent session using the `macos_a
 ## When to use
 
 - Verify the toggle icon collapses/expands the hidden icons.
-- Open the context menu (Preferences / About / Quit) and open the Preferences window.
-- Assert Preferences window contents (title, `Version`, `0.1.0 (1)`, section labels) without a screenshot.
+- Open the context menu (Settings / About / Quit) and open the Settings window.
+- Assert Settings window contents (title, `Version`, `0.1.0 (1)`, section labels) without a screenshot.
 - ⌘-drag status items to reorder them and confirm the new order.
 - Capture a screenshot of the menu-bar region.
 
@@ -20,8 +20,8 @@ Drive and assert PeekBar's menu-bar UI from any agent session using the `macos_a
 - SwiftUI/AppKit menu-bar utility, `NSApp.setActivationPolicy(.accessory)` (no Dock icon). Bundle id `com.imekachi.PeekBar`.
 - Two `NSStatusItem`s: the **toggle** (AX description `"Collapse menu bar icons"` when expanded, `"Expand menu bar icons"` when collapsed) and the **separator** (AX description `"status menu"`, a thin vertical line).
 - Left-click the toggle → collapse/expand. Ctrl+left-click the toggle → context menu (shown via `NSMenu.popUp`, NOT attached as `statusItem.menu`).
-- Context menu, enabled order: **Preferences**, **About**, **Quit** (`"Check for updates…"` sits between Preferences and About but is disabled, so keyboard nav skips it).
-- Preferences is a normal titled `NSWindow` (title `"Preferences"`), with rows including `Version` / `0.1.0 (1)` and section labels `Menu Bar`, `Updates`.
+- Context menu, enabled order: **Settings** (⌘,), **About**, **Quit** (`"Check for updates…"` sits between Settings and About but is disabled, so keyboard nav skips it).
+- Settings is a normal titled `NSWindow` (title `"Settings"`), with rows including `Version` / `0.1.0 (1)` and section labels `General`, `Menu Bar`, `Updates`. The driver's `prefsWindow()` matches `/preferences/i` but falls back to the first window, so it still resolves after the rename.
 
 ## Prerequisites
 

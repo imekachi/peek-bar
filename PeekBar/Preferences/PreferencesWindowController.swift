@@ -5,7 +5,10 @@ import SwiftUI
 final class PreferencesWindowController: NSWindowController {
     private static let contentSize = NSSize(width: 480, height: 340)
 
-    init() {
+    private let settings: SettingsStore
+
+    init(settings: SettingsStore) {
+        self.settings = settings
         super.init(window: nil)
     }
 
@@ -16,14 +19,14 @@ final class PreferencesWindowController: NSWindowController {
 
     func show() {
         if window == nil {
-            let hostingController = NSHostingController(rootView: PreferencesView())
+            let hostingController = NSHostingController(rootView: PreferencesView(settings: settings))
             let window = NSWindow(
                 contentRect: NSRect(origin: .zero, size: Self.contentSize),
-                styleMask: [.titled, .closable, .miniaturizable],
+                styleMask: [.titled, .closable],
                 backing: .buffered,
                 defer: false
             )
-            window.title = "Preferences"
+            window.title = "Settings"
             window.contentViewController = hostingController
             window.center()
             window.setFrameAutosaveName("PeekBarPreferencesWindow")
@@ -33,6 +36,6 @@ final class PreferencesWindowController: NSWindowController {
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-        StartupLog.emit("PeekBar: preferences opened")
+        StartupLog.emit("PeekBar: settings opened")
     }
 }

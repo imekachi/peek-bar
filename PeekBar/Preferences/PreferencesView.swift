@@ -1,6 +1,12 @@
 import SwiftUI
 
 struct PreferencesView: View {
+    @ObservedObject var settings: SettingsStore
+
+    init(settings: SettingsStore) {
+        _settings = ObservedObject(wrappedValue: settings)
+    }
+
     private var versionString: String {
         let short =
             Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
