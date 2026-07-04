@@ -39,6 +39,19 @@ targets:
       Debug: Signing.xcconfig.example
       Release: Signing.xcconfig.example
 
+  PeekBarTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "26.0"
+    sources:
+      - PeekBarTests
+    dependencies:
+      - target: PeekBar
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   PeekBar:
     build:
@@ -46,3 +59,7 @@ schemes:
         PeekBar: all
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - PeekBarTests
