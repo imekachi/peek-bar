@@ -10,7 +10,7 @@ final class SettingsStore: ObservableObject {
     }
 
     enum AutoCollapseInterval: Int, CaseIterable {
-        case off, s10, s15, s30, s60
+        case off = 0, s10 = 1, s15 = 2, s30 = 3, s60 = 4
     }
 
     private enum Key {
