@@ -21,19 +21,54 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section {
-                LabeledContent("Version", value: versionString)
-            } header: {
-                Text("PeekBar")
+            Section("General") {
+                Toggle("Launch at login", isOn: $settings.launchAtLogin)
+                    .help("Start PeekBar automatically when you log in.")
             }
 
-            Section("General") {}
+            Section {
+                Picker("Auto-collapse", selection: $settings.autoCollapseInterval) {
+                    ForEach(SettingsStore.AutoCollapseInterval.allCases, id: \.self) { interval in
+                        Text(interval.label).tag(interval)
+                    }
+                }
+                .pickerStyle(.menu)
 
-            Section("Menu Bar") {}
+                Toggle("Enable always-hidden section", isOn: $settings.alwaysHiddenEnabled)
 
-            Section("Updates") {}
+                Text(
+                    "Adds a second separator so you can ⌘-drag icons past it to keep them permanently hidden."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } header: {
+                Text("Menu Bar")
+            }
+
+            Section("Updates") {
+                Toggle("Automatically check for updates", isOn: $settings.automaticallyCheckForUpdates)
+
+                LabeledContent("Version", value: versionString)
+
+                // Disabled until spec 0007 implements update checking.
+                Button("Check for Updates…") { }
+                    .buttonStyle(.bordered)
+                    .disabled(true)
+            }
         }
         .formStyle(.grouped)
         .frame(minWidth: 480, minHeight: 340)
+    }
+}
+
+private extension SettingsStore.AutoCollapseInterval {
+    var label: String {
+        switch self {
+        case .off: "Off"
+        case .s10: "10 seconds"
+        case .s15: "15 seconds"
+        case .s30: "30 seconds"
+        case .s60: "1 minute"
+        }
     }
 }
