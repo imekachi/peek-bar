@@ -1,7 +1,6 @@
 import XCTest
 @testable import PeekBar
 
-@MainActor
 final class SettingsStoreTests: XCTestCase {
     private var suiteName: String!
     private var suite: UserDefaults!
@@ -20,6 +19,7 @@ final class SettingsStoreTests: XCTestCase {
         super.tearDown()
     }
 
+    @MainActor
     func testDefaultsWhenKeysAreAbsent() {
         let store = SettingsStore(userDefaults: suite)
 
@@ -31,6 +31,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(store.hasLaunchedBefore)
     }
 
+    @MainActor
     func testRoundTripPersistence() {
         let store = SettingsStore(userDefaults: suite)
         store.launchAtLogin = false
