@@ -1,5 +1,10 @@
 # AGENTS
 
+## Workflow
+- Do work in parallel when possible by utilizing subagents. Need to select the model wisely.
+    - Opus4.8/GPT5.5 for high reasoning e.g. review, plan, high thinking
+    - composer 2.5 non-fast for other simpler tasks
+
 ## Design Context
 
 PeekBar is a native macOS menu-bar utility. Design register is **product** (design serves the app; be indistinguishable from macOS System Settings).
