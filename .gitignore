@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Xcode / build output
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.moved-aside
+
+# XcodeGen: the .xcodeproj is generated from project.yml (source of truth)
+*.xcodeproj
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Local-only code-signing config (never commit the signing identity / team)
+Signing.xcconfig
+*.local.xcconfig
+
+# Sparkle / update signing keys (future, must stay local)
+*.private-key
+eddsa_priv*
+dsa_priv.pem

@@ -1,0 +1,50 @@
+# Menu-bar Hide/Show Toggle
+> Ticket: NO_TICKET  ·  Status: active
+
+## Problem / Why
+macOS menu bars get cluttered with icons. Users want a one-click way to hide the icons they don't need at a glance and reveal them on demand, without removing the apps. PeekBar provides this as a lightweight menu-bar utility. This spec covers the foundational app shell and the core hide/show behavior that every other feature builds on.
+
+## Goals
+- Ship a menu-bar-only macOS utility (PeekBar) with a single Toggle Icon.
+- Let users hide/reveal a contiguous set of menu-bar items with one click.
+- Let users choose which items are hidden by arranging icons with ⌘-drag.
+- Persist layout and collapsed/expanded state across launches and reboots.
+- Provide a right-click menu to reach app actions.
+
+## Non-goals (out of scope)
+- Always-hidden section (see 0003).
+- Auto-collapse timer (see 0004).
+- Launch at login (see 0005).
+- Preferences window internals (see 0002).
+- In-app updates (see 0007).
+- App Store distribution.
+- Programmatically moving other apps' menu-bar items (macOS does not allow it; users arrange via ⌘-drag).
+- A global keyboard shortcut (explicitly dropped).
+- macOS 27 support for the hide mechanism: the system's menu-bar re-architecture ignores width inflation, so hiding does not take effect there. Tracked as a known limitation and future work (see docs/adr/0001-menu-bar-hide-mechanism.md).
+
+## Behavior / Requirements
+- PeekBar runs as a background agent: no Dock icon, no main application window, presence only in the menu bar.
+- On launch, PeekBar shows the Toggle Icon as `›` (expanded).
+- Clicking the Toggle Icon collapses the Normal-collapse zone (items to the left of the Toggle Icon): those items become hidden and the Toggle Icon changes to `‹`.
+- Clicking the Toggle Icon again expands: the hidden items reappear and the icon returns to `›`.
+- Users choose which items are hidden by ⌘-dragging menu-bar icons so the ones they want hidden sit to the left of the Toggle Icon.
+- The Toggle Icon is never hidden by any PeekBar mechanism.
+- The current collapsed/expanded state and the Toggle Icon's position persist across app relaunch and system reboot.
+- Right-clicking the Toggle Icon opens the app menu, with items grouped by separators:
+  - Group 1: "Show Always Hidden Icons" / "Hide Always Hidden Icons" — shown only when the always-hidden feature is enabled (see 0003).
+  - Group 2: "Preferences", "Check for updates…", "About".
+  - Group 3: "Quit".
+  - Menu labels carry no app-name suffix (e.g., "Quit", not "Quit PeekBar").
+- "Preferences" opens the Preferences window (see 0002).
+- "About" shows basic app info (name and version; version detail per 0007).
+- "Quit" terminates PeekBar and removes its menu-bar icons.
+
+## Domain terms
+See docs/specs/CONTEXT.md. Uses: PeekBar, Toggle Icon, Normal-collapse zone, Collapse / Expand, ⌘-drag arrange, Menu-bar item.
+
+## Decisions
+- Minimum supported macOS: 26 Tahoe. Rationale: target only current macOS to use modern system APIs without legacy fallbacks; older macOS is unsupported.
+- Distribution is outside the App Store (direct download via GitHub Releases; see 0007). App Store submission is a non-goal.
+- No global keyboard shortcut: deliberately dropped to keep scope and required permissions minimal; toggling is via click (and auto-collapse, see 0004).
+- Menu-bar glyph assets (`›`, `‹`, `ǀ`) are reused from the reference project (dwarvesf/hidden); the application icon is designed fresh (see 0008).
+- Hiding uses bounded width-inflation of an owned separator item (not a fixed 10000px), behind a swappable mechanism abstraction; macOS 27 support is deferred (see docs/adr/0001-menu-bar-hide-mechanism.md).
