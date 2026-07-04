@@ -21,7 +21,7 @@ final class StatusBarController: NSObject {
 
     let separatorItem = NSStatusBar.system.statusItem(withLength: HideWidth.expandedWidth)
     separatorItem.autosaveName = SettingsStore.StatusItemAutosaveName.separatorItem
-    self.hideStrategy = LengthInflationStrategy(separatorItem: separatorItem)
+    self.hideStrategy = LengthInflationStrategy(separatorItem: separatorItem, toggleItem: toggleItem)
 
     let menuBundle = StatusItemMenu.makeMenu(preferencesController: preferencesController)
     self.contextMenu = menuBundle.menu
@@ -96,7 +96,7 @@ final class StatusBarController: NSObject {
   }
 
   private static func chevronImage(collapsed: Bool) -> NSImage? {
-    let symbolName = collapsed ? "chevron.left" : "chevron.compact.right"
+    let symbolName = collapsed ? "chevron.compact.left" : "chevron.compact.right"
     let description = collapsed ? "Expand menu bar icons" : "Collapse menu bar icons"
     guard let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: description) else {
       return nil
