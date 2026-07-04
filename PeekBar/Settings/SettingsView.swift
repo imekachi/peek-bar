@@ -35,14 +35,12 @@ struct SettingsView: View {
                 .pickerStyle(.menu)
 
                 Toggle("Enable always-hidden section", isOn: $settings.alwaysHiddenEnabled)
-
+            } header: {
+                Text("Menu Bar")
+            } footer: {
                 Text(
                     "Adds a second separator so you can ⌘-drag icons past it to keep them permanently hidden."
                 )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            } header: {
-                Text("Menu Bar")
             }
 
             Section("Updates") {
@@ -57,7 +55,9 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(minWidth: 480, minHeight: 340)
+        // Fix a native settings width and let height follow content, so the window can size to
+        // fit every section (no scrolling, nothing clipped), as System Settings panes do.
+        .frame(width: 500)
     }
 }
 

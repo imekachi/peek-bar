@@ -3,8 +3,6 @@ import SwiftUI
 
 @MainActor
 final class SettingsWindowController: NSWindowController {
-    private static let contentSize = NSSize(width: 480, height: 340)
-
     private let settings: SettingsStore
 
     init(settings: SettingsStore) {
@@ -20,16 +18,15 @@ final class SettingsWindowController: NSWindowController {
     func show() {
         if window == nil {
             let hostingController = NSHostingController(rootView: SettingsView(settings: settings))
-            let window = NSWindow(
-                contentRect: NSRect(origin: .zero, size: Self.contentSize),
-                styleMask: [.titled, .closable],
-                backing: .buffered,
-                defer: false
-            )
+            // Drive the window size from the SwiftUI content's fitting size so every section is
+            // visible without scrolling, the way System Settings panes fit their content. A frame
+            // autosave name is intentionally omitted: a stale saved height would re-clip content.
+            hostingController.sizingOptions = [.preferredContentSize]
+
+            let window = NSWindow(contentViewController: hostingController)
+            window.styleMask = [.titled, .closable]
             window.title = "Settings"
-            window.contentViewController = hostingController
             window.center()
-            window.setFrameAutosaveName("PeekBarSettingsWindow")
             self.window = window
         }
 
