@@ -1,0 +1,6 @@
+// Committed signing defaults. Copy to Signing.xcconfig (gitignored) and set DEVELOPMENT_TEAM.
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = Apple Development
+DEVELOPMENT_TEAM =
+
+#include? "Signing.xcconfig"

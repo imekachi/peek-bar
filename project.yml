@@ -1,0 +1,65 @@
+name: PeekBar
+options:
+  bundleIdPrefix: com.imekachi
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+
+targets:
+  PeekBar:
+    type: application
+    platform: macOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: PeekBar
+        excludes:
+          - Resources/Info.plist
+          - Resources/PeekBar.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.imekachi.PeekBar
+        INFOPLIST_FILE: PeekBar/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: PeekBar/Resources/PeekBar.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_VERSION: "6.0"
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.1.0
+    configFiles:
+      Debug: Signing.xcconfig.example
+      Release: Signing.xcconfig.example
+
+  PeekBarTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "26.0"
+    sources:
+      - PeekBarTests
+    dependencies:
+      - target: PeekBar
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  PeekBar:
+    build:
+      targets:
+        PeekBar: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - PeekBarTests
