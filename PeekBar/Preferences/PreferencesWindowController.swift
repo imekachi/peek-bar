@@ -23,7 +23,7 @@ final class PreferencesWindowController: NSWindowController {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "PeekBar Settings"
+            window.title = "Preferences"
             window.contentViewController = hostingController
             window.center()
             window.setFrameAutosaveName("PeekBarPreferencesWindow")

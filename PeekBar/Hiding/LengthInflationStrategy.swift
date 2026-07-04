@@ -14,10 +14,10 @@ final class LengthInflationStrategy: HideStrategy {
         self.toggleItem = toggleItem
     }
 
-    func apply(collapsed: Bool) {
+    func apply(collapsed: Bool) -> Bool {
         guard collapsed else {
             separatorItem.length = HideWidth.expandedWidth
-            return
+            return true
         }
 
         // Never inflate past the Toggle Icon: if the boundary sits to the Toggle Icon's right,
@@ -29,12 +29,13 @@ final class LengthInflationStrategy: HideStrategy {
            toggleFrame.minX < separatorFrame.minX {
             separatorItem.length = HideWidth.expandedWidth
             StartupLog.emit("PeekBar: warning — collapse refused; boundary is right of the Toggle Icon")
-            return
+            return false
         }
 
         // The menu bar replicates across every attached display, so size the collapse to the
         // WIDEST screen — a narrower one would leak hidden icons on a wider external display.
         let screenWidth = NSScreen.screens.map { $0.frame.width }.max() ?? 0
         separatorItem.length = HideWidth.length(collapsed: true, screenWidth: screenWidth)
+        return true
     }
 }

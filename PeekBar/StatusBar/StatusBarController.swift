@@ -1,5 +1,7 @@
 import AppKit
 
+typealias HideStrategyFactory = (_ separatorItem: NSStatusItem, _ toggleItem: NSStatusItem) -> HideStrategy
+
 /// Owns two status items: the Toggle Icon (always visible, fixed width, NEVER inflated) and an
 /// inflatable boundary item glued to its left. Collapse inflates ONLY the boundary item, pushing
 /// icons to its left off-screen; the Toggle Icon never inflates, so it is never hidden (spec 0001).
@@ -14,7 +16,13 @@ final class StatusBarController: NSObject {
 
   var isCollapsed: Bool { settings.isCollapsed }
 
-  init(settings: SettingsStore, preferencesController: PreferencesWindowController) {
+  init(
+    settings: SettingsStore,
+    preferencesController: PreferencesWindowController,
+    hideStrategyFactory: HideStrategyFactory = { separatorItem, toggleItem in
+      LengthInflationStrategy(separatorItem: separatorItem, toggleItem: toggleItem)
+    }
+  ) {
     self.settings = settings
 
     // Toggle Icon first so it sits rightmost (nearest the clock). It keeps a fixed width and is
@@ -28,7 +36,7 @@ final class StatusBarController: NSObject {
     let separatorItem = NSStatusBar.system.statusItem(withLength: HideWidth.expandedWidth)
     separatorItem.autosaveName = SettingsStore.StatusItemAutosaveName.separatorItem
     self.separatorItem = separatorItem
-    self.hideStrategy = LengthInflationStrategy(separatorItem: separatorItem, toggleItem: toggleItem)
+    self.hideStrategy = hideStrategyFactory(separatorItem, toggleItem)
 
     let menuBundle = StatusItemMenu.makeMenu(preferencesController: preferencesController)
     self.contextMenu = menuBundle.menu
@@ -40,23 +48,27 @@ final class StatusBarController: NSObject {
     configureSeparator()
     restoreItemVisibility()
 
-    let collapsed = settings.isCollapsed
-    updateChevron(collapsed: collapsed)
-    hideStrategy.apply(collapsed: collapsed)
+    applyCollapsedState(settings.isCollapsed)
 
     StartupLog.emit("PeekBar: status item ready")
   }
 
   /// Reset to expanded on quit so hidden icons reappear, without mutating the persisted state.
   func expandForShutdown() {
-    hideStrategy.apply(collapsed: false)
+    _ = hideStrategy.apply(collapsed: false)
   }
 
   func toggle() {
-    settings.isCollapsed = !settings.isCollapsed
-    let collapsed = settings.isCollapsed
-    hideStrategy.apply(collapsed: collapsed)
-    updateChevron(collapsed: collapsed)
+    applyCollapsedState(!isCollapsed)
+  }
+
+  @discardableResult
+  private func applyCollapsedState(_ collapsed: Bool) -> Bool {
+    let applied = hideStrategy.apply(collapsed: collapsed)
+    let actualCollapsed = collapsed && applied
+    settings.isCollapsed = actualCollapsed
+    updateChevron(collapsed: actualCollapsed)
+    return actualCollapsed
   }
 
   #if DEBUG

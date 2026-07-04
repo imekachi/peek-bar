@@ -3,7 +3,9 @@ import CoreGraphics
 /// Abstracts how menu-bar icons are hidden so toggle/menu/UI never depend on the mechanism.
 @MainActor
 protocol HideStrategy {
-    func apply(collapsed: Bool)
+    /// Applies the requested collapse state. Returns `true` when the requested state was applied;
+    /// returns `false` when collapse was refused (caller should remain expanded).
+    func apply(collapsed: Bool) -> Bool
 }
 
 /// Pure width computation for length-inflation collapse. Side-effect free and testable.
