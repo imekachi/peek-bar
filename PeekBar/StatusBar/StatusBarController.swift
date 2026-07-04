@@ -7,7 +7,7 @@ typealias HideStrategyFactory = (_ separatorItem: NSStatusItem, _ toggleItem: NS
 /// icons to its left off-screen; the Toggle Icon never inflates, so it is never hidden (spec 0001).
 @MainActor
 final class StatusBarController: NSObject {
-  private var settings: SettingsStore
+  private let settings: SettingsStore
   private let hideStrategy: HideStrategy
   private let toggleItem: NSStatusItem
   private let separatorItem: NSStatusItem
@@ -18,7 +18,7 @@ final class StatusBarController: NSObject {
 
   init(
     settings: SettingsStore,
-    preferencesController: PreferencesWindowController,
+    settingsController: SettingsWindowController,
     hideStrategyFactory: HideStrategyFactory = { separatorItem, toggleItem in
       LengthInflationStrategy(separatorItem: separatorItem, toggleItem: toggleItem)
     }
@@ -38,7 +38,7 @@ final class StatusBarController: NSObject {
     self.separatorItem = separatorItem
     self.hideStrategy = hideStrategyFactory(separatorItem, toggleItem)
 
-    let menuBundle = StatusItemMenu.makeMenu(preferencesController: preferencesController)
+    let menuBundle = StatusItemMenu.makeMenu(settingsController: settingsController)
     self.contextMenu = menuBundle.menu
     self.menuTarget = menuBundle.target
 

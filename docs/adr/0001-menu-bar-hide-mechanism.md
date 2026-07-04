@@ -26,4 +26,4 @@ The product spec targets "macOS 26 Tahoe+", so the "+" nominally includes macOS 
 ## Consequences
 - Hiding works reliably on macOS 26 with bounded memory.
 - On macOS 27 the hide will not take effect; this must be surfaced as a known limitation and tracked as future work (a managed-overflow `HideStrategy`).
-- The `HideStrategy` seam localizes the future work: adding a managed-overflow backend should not require changes to the toggle, menu, preferences, or persistence layers.
+- The `HideStrategy` seam localizes the future work: adding a managed-overflow backend should not require changes to the toggle, menu, settings, or persistence layers.

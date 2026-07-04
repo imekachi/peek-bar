@@ -1,6 +1,5 @@
 name: PeekBar
 options:
-  bundleIdPrefix: com.imekachi
   deploymentTarget:
     macOS: "26.0"
   createIntermediateGroups: true
@@ -49,6 +48,7 @@ targets:
       - target: PeekBar
     settings:
       base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.imekachi.PeekBarTests
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: YES
 

@@ -14,7 +14,7 @@ Some menu-bar icons are ones the user almost never needs and doesn't want to see
 - Auto-re-hiding the always-hidden set on a timer (this feature is manual reveal/hide only).
 
 ## Behavior / Requirements
-- The always-hidden feature is disabled by default and enabled via a Preferences toggle (see 0002).
+- The always-hidden feature is disabled by default and enabled via a Settings toggle (see 0002).
 - When disabled, no Secondary Separator appears; only the Toggle Icon and the solid Primary Separator (see 0001) are present.
 - When enabled, PeekBar shows the Secondary Separator — a **semi-translucent, dashed** vertical line — in the menu bar. Its dashed, translucent styling makes it visually distinct from the solid Primary Separator, so the always-hidden boundary reads differently from the normal-collapse boundary.
 - Items to the left of the Secondary Separator (the Always-hidden zone) are hidden at all times, except the Toggle Icon, which is never hidden.

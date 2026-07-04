@@ -9,9 +9,9 @@
 
 ## Verification & UI Testing
 
-The `peekbar-ui-testing` skill (`.cursor/skills/peekbar-ui-testing/`) drives and asserts PeekBar's real menu-bar UI (toggle click, Ctrl-click context menu, ⌘-drag reposition, Preferences window) through the `macos_automator` MCP. Use it to verify menu-bar behavior against the running app.
+The `peekbar-ui-testing` skill (`.cursor/skills/peekbar-ui-testing/`) drives and asserts PeekBar's real menu-bar UI (toggle click, Ctrl-click context menu, ⌘-drag reposition, Settings window) through the `macos_automator` MCP. Use it to verify menu-bar behavior against the running app.
 
-During planning, always consider this skill for the verification step: when a task touches the status item, hiding/collapse, the context menu, ⌘-drag ordering, or the Preferences window, integrate concrete `peekbar-ui-testing` checks into the plan as its acceptance/verification criteria (alongside unit tests), rather than relying on manual checking.
+During planning, always consider this skill for the verification step: when a task touches the status item, hiding/collapse, the context menu, ⌘-drag ordering, or the Settings window, integrate concrete `peekbar-ui-testing` checks into the plan as its acceptance/verification criteria (alongside unit tests), rather than relying on manual checking.
 
 ## Design Context
 

@@ -13,7 +13,7 @@ A menu-bar utility is only useful while it is running. Users expect PeekBar to s
 - Managing login items for any app other than PeekBar.
 
 ## Behavior / Requirements
-- Preferences exposes a "Launch at login" toggle (see 0002).
+- Settings exposes a "Launch at login" toggle (see 0002).
 - Default: on.
 - When on, PeekBar launches automatically at user login.
 - When off, PeekBar does not launch at login.

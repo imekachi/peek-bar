@@ -4,18 +4,19 @@ import AppKit
 @MainActor
 enum StatusItemMenu {
   static func makeMenu(
-    preferencesController: PreferencesWindowController
+    settingsController: SettingsWindowController
   ) -> (menu: NSMenu, target: NSObject) {
-    let target = Actions(preferencesController: preferencesController)
+    let target = Actions(settingsController: settingsController)
     let menu = NSMenu()
 
-    let preferences = NSMenuItem(
-      title: "Preferences",
-      action: #selector(Actions.openPreferences(_:)),
-      keyEquivalent: ""
+    // ⌘, is best-effort for an LSUIElement accessory app (no main menu bar); it only works while this menu is key.
+    let settings = NSMenuItem(
+      title: "Settings",
+      action: #selector(Actions.openSettings(_:)),
+      keyEquivalent: ","
     )
-    preferences.target = target
-    menu.addItem(preferences)
+    settings.target = target
+    menu.addItem(settings)
 
     let checkForUpdates = NSMenuItem(
       title: "Check for updates…",
@@ -48,14 +49,14 @@ enum StatusItemMenu {
 
   @MainActor
   private final class Actions: NSObject {
-    private let preferencesController: PreferencesWindowController
+    private let settingsController: SettingsWindowController
 
-    init(preferencesController: PreferencesWindowController) {
-      self.preferencesController = preferencesController
+    init(settingsController: SettingsWindowController) {
+      self.settingsController = settingsController
     }
 
-    @objc func openPreferences(_ sender: Any?) {
-      preferencesController.show()
+    @objc func openSettings(_ sender: Any?) {
+      settingsController.show()
     }
 
     @objc func showAbout(_ sender: Any?) {
