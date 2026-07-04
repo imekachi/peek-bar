@@ -15,7 +15,7 @@ macOS menu bars get cluttered with icons. Users want a one-click way to hide the
 - Always-hidden section (see 0003).
 - Auto-collapse timer (see 0004).
 - Launch at login (see 0005).
-- Preferences window internals (see 0002).
+- Settings window internals (see 0002).
 - In-app updates (see 0007).
 - App Store distribution.
 - Programmatically moving other apps' menu-bar items (macOS does not allow it; users arrange via ⌘-drag).
@@ -33,10 +33,10 @@ macOS menu bars get cluttered with icons. Users want a one-click way to hide the
 - The current collapsed/expanded state and the item positions persist across app relaunch and system reboot.
 - Right-clicking the Toggle Icon opens the app menu, with items grouped by separators:
   - Group 1: "Show Always Hidden Icons" / "Hide Always Hidden Icons" — shown only when the always-hidden feature is enabled (see 0003).
-  - Group 2: "Preferences", "Check for updates…", "About".
+  - Group 2: "Settings", "Check for updates…", "About".
   - Group 3: "Quit".
   - Menu labels carry no app-name suffix (e.g., "Quit", not "Quit PeekBar").
-- "Preferences" opens the Preferences window (see 0002).
+- "Settings" opens the Settings window (see 0002).
 - "About" shows basic app info (name and version; version detail per 0007).
 - "Quit" terminates PeekBar and removes its menu-bar icons.
 
