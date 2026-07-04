@@ -7,7 +7,7 @@ typealias HideStrategyFactory = (_ separatorItem: NSStatusItem, _ toggleItem: NS
 /// icons to its left off-screen; the Toggle Icon never inflates, so it is never hidden (spec 0001).
 @MainActor
 final class StatusBarController: NSObject {
-  private var settings: SettingsStore
+  private let settings: SettingsStore
   private let hideStrategy: HideStrategy
   private let toggleItem: NSStatusItem
   private let separatorItem: NSStatusItem
