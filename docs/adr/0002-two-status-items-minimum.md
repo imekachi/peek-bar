@@ -26,7 +26,7 @@ Two attempts to keep a single visible item failed:
 ## Alternatives considered
 - **Single item, right-pinned glyph.** Rejected: the glyph did not stay reliably visible/clickable when the item inflated, leaving the toggle unreachable.
 - **Invisible boundary item.** Rejected: a phantom the user can drag off the bar; its removal persists system-side and is not app-recoverable.
-- **Managed-overflow / second-bar** (capture items, render them in a dedicated panel — the Bartender/Ice approach). This removes the boundary marker entirely and would allow a true single-toggle UX, and it works on both macOS 26 and 27. Deferred per ADR 0001: large scope, requires Accessibility (and realistically Screen Recording) permissions, and changes the reveal UX. It can be added later behind the existing `HideStrategy` seam without touching the toggle/menu/preferences/persistence layers.
+- **Managed-overflow / second-bar** (capture items, render them in a dedicated panel — the Bartender/Ice approach). This removes the boundary marker entirely and would allow a true single-toggle UX, and it works on both macOS 26 and 27. Deferred per ADR 0001: large scope, requires Accessibility (and realistically Screen Recording) permissions, and changes the reveal UX. It can be added later behind the existing `HideStrategy` seam without touching the toggle/menu/settings/persistence layers.
 
 ## Consequences
 - A visible boundary marker (the solid Primary Separator) is always present next to the Toggle Icon; users arrange icons relative to it via ⌘-drag.

@@ -17,10 +17,10 @@ PeekBar is distributed outside the App Store (direct download), so it needs its 
 
 ## Behavior / Requirements
 - PeekBar checks for updates automatically: on launch and periodically thereafter.
-- Automatic checking is governed by the "Automatically check for updates" toggle in Preferences (see 0002); default on.
+- Automatic checking is governed by the "Automatically check for updates" toggle in Settings (see 0002); default on.
 - When a newer version is found, PeekBar notifies the user and offers a one-click action to download, install, and relaunch into the new version.
-- The right-click menu includes "Check for updates…" and Preferences includes a "Check for Updates" action; both trigger an immediate check. If no newer version exists, the user is told they are up to date.
-- Preferences displays the current app version.
+- The right-click menu includes "Check for updates…" and Settings includes a "Check for Updates" action; both trigger an immediate check. If no newer version exists, the user is told they are up to date.
+- Settings displays the current app version.
 - The update source is the project's GitHub Releases; the update payload is the released app artifact.
 - Downloaded update artifacts are verified as authentic before installation; tampered or unverified downloads are rejected and not installed.
 

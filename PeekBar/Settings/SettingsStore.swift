@@ -24,7 +24,7 @@ final class SettingsStore: ObservableObject {
 
     private let userDefaults: UserDefaults
 
-    /// Whether the app has completed a prior launch; used to auto-open Preferences once.
+    /// Whether the app has completed a prior launch; used to auto-open Settings once.
     @Published var hasLaunchedBefore: Bool {
         didSet { userDefaults.set(hasLaunchedBefore, forKey: Key.hasLaunchedBefore) }
     }

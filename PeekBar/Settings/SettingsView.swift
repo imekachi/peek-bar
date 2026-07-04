@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct PreferencesView: View {
+struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
 
     init(settings: SettingsStore) {

@@ -1,6 +1,5 @@
 name: PeekBar
 options:
-  bundleIdPrefix: com.imekachi
   deploymentTarget:
     macOS: "26.0"
   createIntermediateGroups: true

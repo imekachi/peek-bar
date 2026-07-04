@@ -14,7 +14,7 @@ var APP = 'PeekBar';
 var TAP = 1; // kCGSessionEventTap
 var CMD = 1048576; // kCGEventFlagMaskCommand
 var CTRL = 262144; // kCGEventFlagMaskControl
-var MENU_ITEMS_MAX = 3; // enabled: Preferences, About, Quit
+var MENU_ITEMS_MAX = 3; // enabled: Settings, About, Quit
 var DRAG_DX_MAX = 400;
 
 // CGEventType numeric constants
@@ -181,14 +181,14 @@ function windowCount() {
   }
 }
 
-// Find the Preferences NSWindow (falls back to first window).
-function prefsWindow() {
+// Find the Settings NSWindow (falls back to first window).
+function settingsWindow() {
   var pr = proc();
   var wins = pr.windows();
   for (var i = 0; i < wins.length; i++) {
     var t = '';
     try { t = wins[i].title(); } catch (e) {}
-    if (/preferences/i.test(t)) return wins[i];
+    if (/settings/i.test(t)) return wins[i];
   }
   return wins.length ? wins[0] : null;
 }
@@ -215,7 +215,7 @@ function collectStatic(el, out, depth) {
 }
 
 function windowDump() {
-  var win = prefsWindow();
+  var win = settingsWindow();
   if (!win) return { window: null, texts: [] };
   var out = [];
   collectStatic(win, out, 0);
@@ -249,7 +249,7 @@ function menuInteractionResult(failureMsg) {
 }
 
 // Open the context menu and activate the Nth enabled item via keyboard, all in
-// ONE script run. Enabled order: 1=Preferences, 2=About, 3=Quit ("Check for
+// ONE script run. Enabled order: 1=Settings, 2=About, 3=Quit ("Check for
 // updates…" is disabled and skipped by keyboard nav). Doing this in a single
 // run keeps the click->Down->Return timing tight; splitting menu-open and
 // menu-key across separate MCP calls is racy and unreliable.
@@ -267,15 +267,15 @@ function menuSelect(n) {
   sleep(0.5);
 }
 
-// Coordinate fallback: open the menu, then left-click the Preferences row by
+// Coordinate fallback: open the menu, then left-click the Settings row by
 // offset from the toggle center (menu drops below-right of the status item).
-// Keyboard (menuSelect) is preferred; this exists as a documented fallback.
-function openPrefsByCoordinate() {
+// Keyboard (menuSelect) is recommended; this exists as a documented fallback.
+function openSettingsByCoordinate() {
   var to = toggle();
   if (typeof to === 'string') return to;
   click(to.cx, to.cy, { flags: CTRL });
   sleep(0.35);
-  click(to.cx + 20, to.cy + 36); // Preferences is the first row under the toggle
+  click(to.cx + 20, to.cy + 36); // Settings is the first row under the toggle
   sleep(0.5);
 }
 
@@ -355,7 +355,7 @@ function run(argv) {
 
   if (cmd === 'menu-key') {
     // Advanced primitive: send Down x n + Return to an ALREADY-open menu.
-    // Timing-sensitive across separate MCP calls; prefer `menu-select`.
+    // Timing-sensitive across separate MCP calls; use `menu-select`.
     var nk = validateMenuN(argv, 'menu-key');
     if (typeof nk === 'string') return nk;
     for (var i = 0; i < nk; i++) key(125); // 125 = Down arrow
@@ -364,7 +364,7 @@ function run(argv) {
   }
 
   if (cmd === 'menu-select') {
-    // One-shot reliable menu activation. n: 1=Preferences, 2=About, 3=Quit.
+    // One-shot reliable menu activation. n: 1=Settings, 2=About, 3=Quit.
     var sel = validateMenuN(argv, 'menu-select');
     if (typeof sel === 'string') return sel;
     var selErr = menuSelect(sel);
@@ -374,16 +374,16 @@ function run(argv) {
     );
   }
 
-  if (cmd === 'open-prefs') {
+  if (cmd === 'open-settings') {
     var selErr2 = menuSelect(1);
     if (typeof selErr2 === 'string') return selErr2;
-    return menuInteractionResult('open-prefs: Preferences window did not open');
+    return menuInteractionResult('open-settings: Settings window did not open');
   }
 
-  if (cmd === 'open-prefs-coord') {
-    var coordErr = openPrefsByCoordinate();
+  if (cmd === 'open-settings-coord') {
+    var coordErr = openSettingsByCoordinate();
     if (typeof coordErr === 'string') return coordErr;
-    return menuInteractionResult('open-prefs-coord: Preferences window did not open');
+    return menuInteractionResult('open-settings-coord: Settings window did not open');
   }
 
   if (cmd === 'window') {
@@ -452,6 +452,6 @@ function run(argv) {
   }
 
   return 'usage: state | toggle | collapse | expand | menu-open | menu-key <n> | ' +
-    'menu-select <n> | open-prefs | open-prefs-coord | window | window-dump | ' +
+    'menu-select <n> | open-settings | open-settings-coord | window | window-dump | ' +
     'close-window | drag <idx> <dx> | screenshot [path]';
 }

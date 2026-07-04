@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 @MainActor
-final class PreferencesWindowController: NSWindowController {
+final class SettingsWindowController: NSWindowController {
     private static let contentSize = NSSize(width: 480, height: 340)
 
     private let settings: SettingsStore
@@ -19,7 +19,7 @@ final class PreferencesWindowController: NSWindowController {
 
     func show() {
         if window == nil {
-            let hostingController = NSHostingController(rootView: PreferencesView(settings: settings))
+            let hostingController = NSHostingController(rootView: SettingsView(settings: settings))
             let window = NSWindow(
                 contentRect: NSRect(origin: .zero, size: Self.contentSize),
                 styleMask: [.titled, .closable],
@@ -29,7 +29,7 @@ final class PreferencesWindowController: NSWindowController {
             window.title = "Settings"
             window.contentViewController = hostingController
             window.center()
-            window.setFrameAutosaveName("PeekBarPreferencesWindow")
+            window.setFrameAutosaveName("PeekBarSettingsWindow")
             self.window = window
         }
 

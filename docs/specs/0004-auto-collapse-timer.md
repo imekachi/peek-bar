@@ -13,7 +13,7 @@ After a user expands to peek at hidden icons, they usually want the bar to tidy 
 - Scheduled or activity-based hiding beyond the single post-expand timer.
 
 ## Behavior / Requirements
-- Auto-collapse is configured in Preferences (see 0002) with choices: Off, 10s, 15s, 30s, 60s.
+- Auto-collapse is configured in Settings (see 0002) with choices: Off, 10s, 15s, 30s, 60s.
 - Default is Off.
 - When set to an interval and the user expands (Toggle Icon → `›`), a countdown of that interval starts.
 - When the countdown elapses, PeekBar collapses the Normal-collapse zone automatically (Toggle Icon → `‹`), identical in effect to a manual collapse.

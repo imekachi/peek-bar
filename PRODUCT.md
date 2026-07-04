@@ -8,7 +8,7 @@ product
 
 macOS users with crowded menu bars — people who run many status-bar apps and want a calmer, tidier bar. Their context: PeekBar lives in the menu bar and is used almost entirely from there (one click to collapse/expand, a right-click menu for the rest). The job to be done is "hide the clutter, reveal it on demand, and keep rarely-used icons permanently out of sight."
 
-The Preferences window is an occasional destination, not a hub: opened once on first launch to learn the one non-obvious setup step (⌘-drag arranging icons around the separators), and rarely thereafter to flip a setting. It must therefore be instantly legible and require near-zero learning.
+The Settings window is an occasional destination, not a hub: opened once on first launch to learn the one non-obvious setup step (⌘-drag arranging icons around the separators), and rarely thereafter to flip a setting. It must therefore be instantly legible and require near-zero learning.
 
 ## Product Purpose
 
@@ -30,7 +30,7 @@ Calm, precise, unobtrusive. PeekBar behaves like a good system utility: it does 
 ## Design Principles
 
 - **Native by default.** Match macOS System Settings conventions (SwiftUI `Settings`/`Form`, standard controls, system typography and spacing). When in doubt, do exactly what Apple does — earned familiarity beats novelty.
-- **Invisible until needed.** The product's real surface is the menu bar; Preferences is a quiet, occasional destination, not a dashboard. Don't grow it into a hub.
+- **Invisible until needed.** The product's real surface is the menu bar; Settings is a quiet, occasional destination, not a dashboard. Don't grow it into a hub.
 - **Teach the one hard thing well.** The ⌘-drag setup is the only non-obvious step. Onboarding must make it obvious once, remain available as help afterward, and otherwise get out of the way.
 - **Instant and reliable.** The toggle and every setting take effect immediately — no restart, no ambiguity about the current state.
 - **Respect the user's attention.** No nagging, no upsells, no motion for motion's sake; state-conveying feedback only.

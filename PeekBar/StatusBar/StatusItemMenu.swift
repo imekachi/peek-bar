@@ -4,9 +4,9 @@ import AppKit
 @MainActor
 enum StatusItemMenu {
   static func makeMenu(
-    preferencesController: PreferencesWindowController
+    settingsController: SettingsWindowController
   ) -> (menu: NSMenu, target: NSObject) {
-    let target = Actions(preferencesController: preferencesController)
+    let target = Actions(settingsController: settingsController)
     let menu = NSMenu()
 
     // ⌘, is best-effort for an LSUIElement accessory app (no main menu bar); it only works while this menu is key.
@@ -49,14 +49,14 @@ enum StatusItemMenu {
 
   @MainActor
   private final class Actions: NSObject {
-    private let preferencesController: PreferencesWindowController
+    private let settingsController: SettingsWindowController
 
-    init(preferencesController: PreferencesWindowController) {
-      self.preferencesController = preferencesController
+    init(settingsController: SettingsWindowController) {
+      self.settingsController = settingsController
     }
 
     @objc func openSettings(_ sender: Any?) {
-      preferencesController.show()
+      settingsController.show()
     }
 
     @objc func showAbout(_ sender: Any?) {
