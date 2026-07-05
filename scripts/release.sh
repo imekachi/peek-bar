@@ -325,20 +325,45 @@ verify_staged_assets() {
   verify_appcast_signatures
 }
 
+remote_tag_commit() {
+  local peeled_sha direct_sha
+
+  peeled_sha="$(git ls-remote --tags origin "refs/tags/$TAG^{}" 2>/dev/null | awk '{print $1}')"
+  if [[ -n "$peeled_sha" ]]; then
+    printf '%s' "$peeled_sha"
+    return 0
+  fi
+
+  direct_sha="$(git ls-remote --tags origin "refs/tags/$TAG" 2>/dev/null | awk '{print $1}')"
+  printf '%s' "$direct_sha"
+}
+
 ensure_release_tag() {
   local commit local_sha remote_sha
+  local has_local=0 has_remote=0
 
   commit="$(git rev-parse HEAD)"
 
   if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+    has_local=1
     local_sha="$(git rev-parse "refs/tags/$TAG^{commit}")"
     [[ "$local_sha" == "$commit" ]] \
       || fail "local tag $TAG points to $local_sha, not release commit $commit; delete or move the tag manually before publishing"
-    log "Local tag $TAG already points to $commit"
-  elif git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-    remote_sha="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
+  fi
+
+  remote_sha="$(remote_tag_commit)"
+  if [[ -n "$remote_sha" ]]; then
+    has_remote=1
     [[ "$remote_sha" == "$commit" ]] \
       || fail "remote tag $TAG points to $remote_sha, not release commit $commit; public release tags cannot be rewritten"
+  fi
+
+  if [[ "$has_local" == "1" && "$has_remote" == "1" ]]; then
+    log "Local and remote tag $TAG already point to $commit"
+  elif [[ "$has_local" == "1" ]]; then
+    log "Pushing local tag $TAG to origin"
+    git push origin "$TAG"
+  elif [[ "$has_remote" == "1" ]]; then
     log "Fetching existing remote tag $TAG at $commit"
     git fetch origin "refs/tags/$TAG:refs/tags/$TAG"
   else
