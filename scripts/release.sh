@@ -4,14 +4,23 @@
 # sign it, generate appcast.xml, and publish GitHub Release assets.
 #
 # Prerequisites (one-time, local-only — never commit):
-#   - .env.release with PEEKBAR_SIGNING_IDENTITY, SPARKLE_PRIVATE_KEY_PATH,
-#     and GITHUB_REPOSITORY (see .env.release.example).
+#   - .env.local with PEEKBAR_SIGNING_IDENTITY or APPLE_SIGNING_IDENTITY,
+#     SPARKLE_PRIVATE_KEY_PATH, and GITHUB_REPOSITORY
+#     (see .env.local.example).
 #   - Sparkle EdDSA private key at SPARKLE_PRIVATE_KEY_PATH.
 #   - `gh` CLI authenticated for publishing (not required for --dry-run).
 #
 # Usage:
-#   ./scripts/release.sh --dry-run    # stage assets locally; no tag/gh/git mutation
-#   ./scripts/release.sh              # build, tag, and publish a GitHub Release
+#   ./scripts/release.sh                 # version read from project.yml/Info.plist
+#   ./scripts/release.sh 0.2.0           # bump + commit version, then release
+#   ./scripts/release.sh -f              # overwrite an existing tag/release
+#   ./scripts/release.sh 0.2.0 -f        # bump + overwrite
+#   ./scripts/release.sh --dry-run       # stage assets locally; no tag/gh/git mutation
+#   ./scripts/release.sh 0.2.0 --dry-run # stage assets with that version; no mutation
+#
+# By default the script refuses to release a version whose tag already exists
+# (local or on origin). Re-run with -f / --force to move the tag and overwrite
+# the release assets.
 #
 set -euo pipefail
 
@@ -24,20 +33,34 @@ PROJECT="PeekBar.xcodeproj"
 DERIVED_DATA="build"
 STAGE_DIR="$ROOT_DIR/release"
 DRY_RUN=0
+FORCE=0
+VERSION_ARG=""
 
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
+    -f|--force) FORCE=1 ;;
     -h|--help)
-      sed -n '2,16p' "$0"
+      sed -n '2,23p' "$0"
       exit 0
       ;;
-    *)
-      echo "ERROR: unknown argument '$arg' (supported: --dry-run)" >&2
+    -*)
+      echo "ERROR: unknown flag '$arg' (supported: --dry-run, -f, --force)" >&2
       exit 1
+      ;;
+    *)
+      if [[ -n "$VERSION_ARG" ]]; then
+        echo "ERROR: multiple version arguments provided: '$VERSION_ARG' and '$arg'" >&2
+        exit 1
+      fi
+      VERSION_ARG="$arg"
       ;;
   esac
 done
+
+# `npm run release -f` is consumed by npm itself and exposed as
+# npm_config_force=true. Honor it so npm-style forwarding still works.
+[[ "${npm_config_force:-}" == "true" ]] && FORCE=1
 
 log() {
   echo "==> $*"
@@ -49,13 +72,20 @@ fail() {
 }
 
 load_env() {
-  local env_file="$ROOT_DIR/.env.release"
+  local env_file
+  env_file="$ROOT_DIR/.env.local"
   if [[ -f "$env_file" ]]; then
     log "Loading $env_file"
     set -a
     # shellcheck disable=SC1090
     source "$env_file"
     set +a
+  fi
+}
+
+normalize_env() {
+  if [[ -z "${PEEKBAR_SIGNING_IDENTITY:-}" && -n "${APPLE_SIGNING_IDENTITY:-}" ]]; then
+    PEEKBAR_SIGNING_IDENTITY="$APPLE_SIGNING_IDENTITY"
   fi
 }
 
@@ -71,7 +101,7 @@ require_env() {
   if [[ ${#missing[@]} -gt 0 ]]; then
     echo "ERROR: missing required release environment variables:" >&2
     printf '  - %s\n' "${missing[@]}" >&2
-    echo "Set them in .env.release (gitignored) or export them in your shell." >&2
+    echo "Set them in .env.local (gitignored) or export them in your shell." >&2
     exit 1
   fi
 }
@@ -91,9 +121,52 @@ read_version() {
   fi
   [[ -n "$BUILD_NUMBER" ]] || fail "could not determine build number from project.yml or Info.plist"
 
+  set_release_version "$VERSION"
+}
+
+set_release_version() {
+  VERSION="$1"
   TAG="v$VERSION"
   ARCHIVE_NAME="${APP_NAME}-${VERSION}.zip"
   DOWNLOAD_PREFIX="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/"
+}
+
+bump_version() {
+  local version="$1"
+
+  [[ "$version" =~ ^[0-9]+(\.[0-9]+){2}([-.][0-9A-Za-z]+)?$ ]] \
+    || fail "version '$version' is not a supported release version (expected SemVer like 0.2.0)"
+
+  log "Bumping version to $version"
+  python3 - "$version" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+version = sys.argv[1]
+project_path = Path("project.yml")
+text = project_path.read_text()
+updated, count = re.subn(
+    r"(^[ \t]*MARKETING_VERSION:[ \t]*)[^\n#]+",
+    rf"\g<1>{version}",
+    text,
+    count=1,
+    flags=re.MULTILINE,
+)
+if count != 1:
+    print("ERROR: could not update MARKETING_VERSION in project.yml", file=sys.stderr)
+    sys.exit(1)
+project_path.write_text(updated)
+PY
+
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" PeekBar/Resources/Info.plist
+
+  git add project.yml PeekBar/Resources/Info.plist
+  if git diff --cached --quiet -- project.yml PeekBar/Resources/Info.plist; then
+    log "Version already $version; nothing to commit"
+  else
+    git commit -m "chore(release): v$version" -- project.yml PeekBar/Resources/Info.plist
+  fi
 }
 
 resolve_sparkle_tools() {
@@ -129,6 +202,15 @@ preflight_publish() {
 
   if ! git diff --quiet || ! git diff --cached --quiet; then
     fail "working tree has uncommitted changes; commit or stash before publishing"
+  fi
+}
+
+preflight_release_tag() {
+  if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null \
+    || [[ -n "$(git ls-remote --tags origin "refs/tags/$TAG" 2>/dev/null)" ]]; then
+    if [[ "$FORCE" != "1" ]]; then
+      fail "tag $TAG already exists (local or origin). Re-run with -f / --force to overwrite it"
+    fi
   fi
 }
 
@@ -344,6 +426,13 @@ ensure_release_tag() {
 
   commit="$(git rev-parse HEAD)"
 
+  if [[ "$FORCE" == "1" ]]; then
+    log "Overwriting tag $TAG at $commit (-f)"
+    git tag -f -a "$TAG" -m "$TAG" "$commit"
+    git push -f origin "$TAG"
+    return 0
+  fi
+
   if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
     has_local=1
     local_sha="$(git rev-parse "refs/tags/$TAG^{commit}")"
@@ -402,7 +491,7 @@ publish_release() {
   [[ -n "$compare_url" ]] && release_body+=$'\n\n**Full Changelog**: '"$compare_url"
 
   if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-    log "Release $TAG exists; uploading assets"
+    log "Release $TAG exists; uploading/overwriting assets + notes"
     gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
       "$STAGE_DIR/$ARCHIVE_NAME" \
       "$STAGE_DIR/appcast.xml"
@@ -421,16 +510,43 @@ publish_release() {
   log "Done. Appcast: https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/appcast.xml"
 }
 
-main() {
-  load_env
-  require_env
+resolve_release_version() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    read_version
+    if [[ -n "$VERSION_ARG" ]]; then
+      log "[dry-run] Using requested version $VERSION_ARG without editing version files"
+      set_release_version "$VERSION_ARG"
+    fi
+    return 0
+  fi
+
+  if [[ -n "$VERSION_ARG" ]]; then
+    set_release_version "$VERSION_ARG"
+    preflight_release_tag
+    bump_version "$VERSION_ARG"
+  fi
+
   read_version
 
+  if [[ -n "$VERSION_ARG" && "$VERSION" != "$VERSION_ARG" ]]; then
+    fail "version files resolved to $VERSION after bump, expected $VERSION_ARG"
+  fi
+
+  preflight_release_tag
+}
+
+main() {
+  load_env
+  normalize_env
+  require_env
+
   if [[ "$DRY_RUN" == "1" ]]; then
+    resolve_release_version
     log "[dry-run] Releasing $TAG (local staging only; no tag, push, or GitHub mutation)"
   else
-    log "Releasing $TAG"
     preflight_publish
+    resolve_release_version
+    log "Releasing $TAG"
   fi
 
   resolve_sparkle_tools

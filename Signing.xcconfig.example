@@ -1,4 +1,5 @@
-// Committed signing defaults. Copy to Signing.xcconfig (gitignored) and set DEVELOPMENT_TEAM.
+// Committed signing defaults. `xcodegen generate` writes Signing.xcconfig
+// from .env.local when APPLE_SIGNING_IDENTITY or PEEKBAR_SIGNING_IDENTITY is set.
 CODE_SIGN_STYLE = Automatic
 CODE_SIGN_IDENTITY = Apple Development
 DEVELOPMENT_TEAM =

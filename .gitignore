@@ -21,7 +21,7 @@ Signing.xcconfig
 *.local.xcconfig
 
 # Local-only release env and staging output (never commit signing inputs or artifacts)
-.env.release
+.env.local
 release/
 
 # Sparkle / update signing keys (must stay local)
