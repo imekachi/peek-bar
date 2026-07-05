@@ -244,6 +244,122 @@ final class UpdateEntryPointTests: XCTestCase {
         XCTAssertEqual(alwaysHiddenApplyCalls.last, true)
     }
 
+    func testAutoCollapseSchedulesConfiguredIntervalOnExpand() {
+        let scheduler = MockAutoCollapseScheduler()
+        let controller = AutoCollapseTimerController(scheduler: scheduler)
+        var collapseCallCount = 0
+
+        controller.expand(interval: .s15) {
+            collapseCallCount += 1
+        }
+
+        XCTAssertTrue(scheduler.isScheduled)
+        XCTAssertEqual(scheduler.lastInterval, 15)
+
+        scheduler.fire()
+
+        XCTAssertEqual(collapseCallCount, 1)
+    }
+
+    func testAutoCollapseOffDoesNotScheduleOnExpand() {
+        let scheduler = MockAutoCollapseScheduler()
+        let controller = AutoCollapseTimerController(scheduler: scheduler)
+
+        controller.expand(interval: .off) {
+            XCTFail("Off should not schedule auto-collapse")
+        }
+
+        XCTAssertFalse(scheduler.isScheduled)
+        XCTAssertEqual(scheduler.scheduleCallCount, 0)
+    }
+
+    func testManualCollapseCancelsPendingAutoCollapse() {
+        let scheduler = MockAutoCollapseScheduler()
+        let controller = AutoCollapseTimerController(scheduler: scheduler)
+        var collapseCallCount = 0
+
+        controller.expand(interval: .s30) {
+            collapseCallCount += 1
+        }
+        controller.collapse()
+        scheduler.fire()
+
+        XCTAssertFalse(scheduler.isScheduled)
+        XCTAssertEqual(scheduler.cancelCallCount, 2)
+        XCTAssertEqual(collapseCallCount, 0)
+    }
+
+    func testIntervalChangeWhileCollapsedAppliesOnNextExpand() {
+        let scheduler = MockAutoCollapseScheduler()
+        let controller = AutoCollapseTimerController(scheduler: scheduler)
+
+        controller.intervalDidChange(to: .s60, isExpanded: false) {}
+
+        XCTAssertFalse(scheduler.isScheduled)
+        XCTAssertEqual(scheduler.scheduleCallCount, 0)
+
+        controller.expand(interval: .s60) {}
+
+        XCTAssertTrue(scheduler.isScheduled)
+        XCTAssertEqual(scheduler.lastInterval, 60)
+        XCTAssertEqual(scheduler.scheduleCallCount, 1)
+    }
+
+    func testIntervalChangeWhileExpandedSchedulesNewCountdown() {
+        let scheduler = MockAutoCollapseScheduler()
+        let controller = AutoCollapseTimerController(scheduler: scheduler)
+        var collapseCallCount = 0
+
+        controller.intervalDidChange(to: .s10, isExpanded: true) {
+            collapseCallCount += 1
+        }
+
+        XCTAssertTrue(scheduler.isScheduled)
+        XCTAssertEqual(scheduler.lastInterval, 10)
+        scheduler.fire()
+        XCTAssertEqual(collapseCallCount, 1)
+    }
+
+    func testIntervalChangeWhileExpandedRestartsCountdown() {
+        let scheduler = MockAutoCollapseScheduler()
+        let controller = AutoCollapseTimerController(scheduler: scheduler)
+        var firstCollapseCallCount = 0
+        var secondCollapseCallCount = 0
+
+        controller.expand(interval: .s10) {
+            firstCollapseCallCount += 1
+        }
+        controller.intervalDidChange(to: .s60, isExpanded: true) {
+            secondCollapseCallCount += 1
+        }
+
+        XCTAssertTrue(scheduler.isScheduled)
+        XCTAssertEqual(scheduler.lastInterval, 60)
+        XCTAssertEqual(scheduler.scheduleCallCount, 2)
+
+        scheduler.fire()
+
+        XCTAssertEqual(firstCollapseCallCount, 0)
+        XCTAssertEqual(secondCollapseCallCount, 1)
+    }
+
+    func testSelectingOffCancelsPendingAutoCollapse() {
+        let scheduler = MockAutoCollapseScheduler()
+        let controller = AutoCollapseTimerController(scheduler: scheduler)
+        var collapseCallCount = 0
+
+        controller.expand(interval: .s10) {
+            collapseCallCount += 1
+        }
+        controller.intervalDidChange(to: .off, isExpanded: true) {
+            collapseCallCount += 1
+        }
+        scheduler.fire()
+
+        XCTAssertFalse(scheduler.isScheduled)
+        XCTAssertEqual(collapseCallCount, 0)
+    }
+
     func testUpdateControllerSatisfiesManualUpdateChecking() {
         let checker = MockUpdateChecker()
         let controller = UpdateController(
@@ -295,4 +411,34 @@ private final class MockPeriodicScheduler: PeriodicTimerScheduling {
     func schedule(interval: TimeInterval, handler: @escaping @MainActor () -> Void) {}
 
     func cancel() {}
+}
+
+@MainActor
+private final class MockAutoCollapseScheduler: AutoCollapseTimerScheduling {
+    private var handler: (@MainActor () -> Void)?
+
+    private(set) var isScheduled = false
+    private(set) var lastInterval: TimeInterval?
+    private(set) var scheduleCallCount = 0
+    private(set) var cancelCallCount = 0
+
+    func schedule(interval: TimeInterval, handler: @escaping @MainActor () -> Void) {
+        isScheduled = true
+        lastInterval = interval
+        scheduleCallCount += 1
+        self.handler = handler
+    }
+
+    func cancel() {
+        isScheduled = false
+        handler = nil
+        cancelCallCount += 1
+    }
+
+    func fire() {
+        guard let handler else { return }
+        isScheduled = false
+        self.handler = nil
+        handler()
+    }
 }

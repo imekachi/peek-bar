@@ -18,7 +18,7 @@ After a user expands to peek at hidden icons, they usually want the bar to tidy 
 - When set to an interval and the user expands (Toggle Icon → `›`), a countdown of that interval starts.
 - When the countdown elapses, PeekBar collapses the Normal-collapse zone automatically (Toggle Icon → `‹`), identical in effect to a manual collapse.
 - Manually collapsing before the countdown elapses cancels the pending auto-collapse.
-- Changing the interval takes effect on the next expand; selecting Off disables auto-collapse entirely.
+- Changing the interval while expanded starts/restarts the countdown with the new interval; changing it while collapsed takes effect on the next expand; selecting Off cancels any pending countdown and disables auto-collapse entirely.
 - The selected interval persists across relaunch.
 
 ## Domain terms

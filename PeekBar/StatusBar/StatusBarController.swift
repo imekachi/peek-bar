@@ -3,6 +3,66 @@ import Combine
 
 typealias HideStrategyFactory = (_ separatorItem: NSStatusItem, _ toggleItem: NSStatusItem) -> HideStrategy
 
+@MainActor
+protocol AutoCollapseTimerScheduling: AnyObject {
+  func schedule(interval: TimeInterval, handler: @escaping @MainActor () -> Void)
+  func cancel()
+}
+
+@MainActor
+final class SystemAutoCollapseTimerScheduler: AutoCollapseTimerScheduling {
+  private var timer: Timer?
+
+  func schedule(interval: TimeInterval, handler: @escaping @MainActor () -> Void) {
+    cancel()
+    timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
+      Task { @MainActor in
+        self?.timer = nil
+        handler()
+      }
+    }
+  }
+
+  func cancel() {
+    timer?.invalidate()
+    timer = nil
+  }
+}
+
+@MainActor
+final class AutoCollapseTimerController {
+  private let scheduler: AutoCollapseTimerScheduling
+
+  init(scheduler: AutoCollapseTimerScheduling) {
+    self.scheduler = scheduler
+  }
+
+  func expand(
+    interval: SettingsStore.AutoCollapseInterval,
+    collapse: @escaping @MainActor () -> Void
+  ) {
+    scheduler.cancel()
+    guard let duration = interval.duration else { return }
+
+    scheduler.schedule(interval: duration, handler: collapse)
+  }
+
+  func collapse() {
+    scheduler.cancel()
+  }
+
+  func intervalDidChange(
+    to interval: SettingsStore.AutoCollapseInterval,
+    isExpanded: Bool,
+    collapse: @escaping @MainActor () -> Void
+  ) {
+    scheduler.cancel()
+    guard isExpanded, let duration = interval.duration else { return }
+
+    scheduler.schedule(interval: duration, handler: collapse)
+  }
+}
+
 /// Owns PeekBar's menu-bar items: the Toggle Icon (always visible, fixed width, NEVER inflated),
 /// the solid Primary Separator, and the optional dashed Secondary Separator (specs 0001/0003).
 @MainActor
@@ -16,6 +76,7 @@ final class StatusBarController: NSObject {
   private var contextMenu: NSMenu!
   private var menuTarget: NSObject!
   private var settingsObservers = Set<AnyCancellable>()
+  private let autoCollapseTimer: AutoCollapseTimerController
 
   var isCollapsed: Bool { settings.isCollapsed }
 
@@ -23,11 +84,13 @@ final class StatusBarController: NSObject {
     settings: SettingsStore,
     settingsController: SettingsWindowController,
     manualUpdateChecker: ManualUpdateChecking,
+    autoCollapseScheduler: AutoCollapseTimerScheduling = SystemAutoCollapseTimerScheduler(),
     hideStrategyFactory: HideStrategyFactory = { separatorItem, toggleItem in
       LengthInflationStrategy(separatorItem: separatorItem, toggleItem: toggleItem)
     }
   ) {
     self.settings = settings
+    self.autoCollapseTimer = AutoCollapseTimerController(scheduler: autoCollapseScheduler)
 
     // User-arranged Toggle Icon. It keeps a fixed width and is never inflated directly.
     let toggleItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -86,12 +149,22 @@ final class StatusBarController: NSObject {
 
   /// Reset to expanded on quit so hidden icons reappear, without mutating the persisted state.
   func expandForShutdown() {
+    autoCollapseTimer.collapse()
     _ = alwaysHiddenStrategy.apply(collapsed: false)
     _ = hideStrategy.apply(collapsed: false)
   }
 
   func toggle() {
-    applyCollapsedState(!isCollapsed)
+    let requestedCollapsed = !isCollapsed
+    let actualCollapsed = applyCollapsedState(requestedCollapsed)
+
+    if requestedCollapsed {
+      autoCollapseTimer.collapse()
+    } else if !actualCollapsed {
+      autoCollapseTimer.expand(interval: settings.autoCollapseInterval) { [weak self] in
+        self?.applyAutoCollapse()
+      }
+    }
   }
 
   @discardableResult
@@ -104,6 +177,11 @@ final class StatusBarController: NSObject {
     }
     updateChevron(collapsed: actualCollapsed)
     return actualCollapsed
+  }
+
+  private func applyAutoCollapse() {
+    autoCollapseTimer.collapse()
+    _ = applyCollapsedState(true)
   }
 
   private func revealAlwaysHidden() {
@@ -190,6 +268,21 @@ final class StatusBarController: NSObject {
       .sink { [weak self] _ in
         Task { @MainActor in
           self?.applyAlwaysHiddenState()
+        }
+      }
+      .store(in: &settingsObservers)
+
+    settings.$autoCollapseInterval
+      .dropFirst()
+      .sink { [weak self] interval in
+        Task { @MainActor in
+          guard let self else { return }
+          self.autoCollapseTimer.intervalDidChange(
+            to: interval,
+            isExpanded: !self.settings.isCollapsed
+          ) { [weak self] in
+            self?.applyAutoCollapse()
+          }
         }
       }
       .store(in: &settingsObservers)

@@ -12,6 +12,16 @@ final class SettingsStore: ObservableObject {
 
     enum AutoCollapseInterval: Int, CaseIterable {
         case off = 0, s10 = 1, s15 = 2, s30 = 3, s60 = 4
+
+        var duration: TimeInterval? {
+            switch self {
+            case .off: nil
+            case .s10: 10
+            case .s15: 15
+            case .s30: 30
+            case .s60: 60
+            }
+        }
     }
 
     private enum Key {
