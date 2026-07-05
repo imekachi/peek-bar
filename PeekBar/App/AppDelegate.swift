@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        ApplicationIcon.register()
         StartupLog.emit("PeekBar: launched")
 
         let statusBar = StatusBarController(
@@ -32,5 +33,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // the space, but resetting the separator first guarantees icons reappear immediately.
         statusBarController?.expandForShutdown()
         StartupLog.emit("PeekBar: terminating — icons restored")
+    }
+
+}
+
+@MainActor
+enum ApplicationIcon {
+    static func register() {
+        guard let icon = load() else {
+            return
+        }
+
+        NSApp.applicationIconImage = icon
+    }
+
+    static func aboutPanelOptions() -> [NSApplication.AboutPanelOptionKey: Any] {
+        if let icon = NSApp.applicationIconImage {
+            return [.applicationIcon: icon]
+        }
+
+        if let icon = load() {
+            return [.applicationIcon: icon]
+        }
+
+        return [:]
+    }
+
+    private static func load() -> NSImage? {
+        if let icon = NSImage(named: NSImage.applicationIconName) {
+            return icon
+        }
+
+        return Bundle.main.image(forResource: "AppIcon")
     }
 }

@@ -13,14 +13,16 @@ PeekBar is a new app and needs its own distinct application icon (for Finder, th
 - Marketing artwork beyond the app icon.
 
 ## Behavior / Requirements
-- The app icon features a `›` symbol over a background split diagonally from the top-left corner to the bottom-right corner into two triangular halves.
-- Bottom-left half: dark background; the portion of the `›` line over it is light.
-- Top-right half: light background; the portion of the `›` line over it is dark (the reverse of the other half).
-- The `›` line therefore switches from light to dark across the diagonal split, remaining legible on both halves.
-- The icon is delivered at all macOS application-icon sizes/resolutions required by the system, following macOS icon conventions.
+- The app icon features a `›` symbol as its central motif, with room for visual refinement as long as it stays recognizably tied to PeekBar's Toggle Icon.
+- The background is a darker, macOS-style app-icon surface with a subtle gradient/depth treatment. It should feel native and polished, not flat marketing artwork.
+- The icon no longer uses the earlier two-tone diagonal split; the background should read as one coherent dark surface.
+- The `›` motif remains clearly legible at all required macOS app-icon sizes, including small Finder/About sizes.
+- The icon follows macOS application-icon conventions: rounded app-icon field, balanced optical padding, restrained depth, and no text/badges.
+- The icon is delivered at all macOS application-icon sizes/resolutions required by the system.
 
 ## Domain terms
 See docs/specs/CONTEXT.md. Uses: PeekBar, Toggle Icon.
 
 ## Decisions
 - The icon reuses the `›` toggle glyph as its motif so the application icon and the menu-bar identity stay visually consistent.
+- The earlier two-tone diagonal concept was removed in favor of a darker native gradient background and a more polished, creative `›` mark.
