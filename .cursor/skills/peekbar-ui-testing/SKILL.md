@@ -21,7 +21,7 @@ Drive and assert PeekBar's menu-bar UI from any agent session using the `macos_a
 - Two `NSStatusItem`s: the **toggle** (AX description `"Collapse menu bar icons"` when expanded, `"Expand menu bar icons"` when collapsed) and the **separator** (AX description `"status menu"`, a thin vertical line).
 - Left-click the toggle → collapse/expand. Ctrl+left-click the toggle → context menu (shown via `NSMenu.popUp`, NOT attached as `statusItem.menu`).
 - Context menu, enabled order: **Settings** (⌘,), **Check for updates…**, **About**, **Quit** (keyboard `menu-select`: 1=Settings, 2=Check for updates…, 3=About, 4=Quit).
-- Settings is a normal titled `NSWindow` (title `"Settings"`), a grouped `Form` with rows including `Version` / the current app version text (`CFBundleShortVersionString` plus `CFBundleVersion` when present), under section headers `General`, `Menu Bar`, `Updates` (the headers render visually but are not exposed as `AXStaticText` in `window-dump`). The driver's `settingsWindow()` matches `/settings/i` but falls back to the first window.
+- Settings is a normal titled `NSWindow` (title `"Settings"`), a grouped `Form` with rows including `Version` / the current app version text, under section headers `General`, `Menu Bar`, `Updates` (the headers render visually but are not exposed as `AXStaticText` in `window-dump`). The driver's `settingsWindow()` matches `/settings/i` but falls back to the first window.
 
 ## Prerequisites
 
@@ -89,7 +89,7 @@ Invoke `macos_automator`'s `execute_script` with the driver's absolute path, `la
 }
 ```
 
-Expected: `texts` contains `"Version"` and the current version string from the built app bundle, formatted as `CFBundleShortVersionString` or `CFBundleShortVersionString (CFBundleVersion)` when the build number is present, plus the row labels `"Launch at login"`, `"Auto-collapse"`, `"Enable always-hidden section"`, and `"Automatically check for updates"`. For the manual update action, assert `buttons` includes at least one entry with `enabled: true` (SwiftUI exposes the bordered button as `AXButton` / desc `"button"` without a title). Note: the grouped-`Form` **section headers** (`General` / `Menu Bar` / `Updates`) render visually but are **not** emitted as `AXStaticText` by `window-dump`, so assert on the row labels + version, not the section titles. If you need a raw AppleScript equivalent, the same idea is (the window is titled `"Settings"`):
+Expected: `texts` contains `"Version"` and the current version string from the built app bundle, plus the row labels `"Launch at login"`, `"Auto-collapse"`, `"Enable always-hidden section"`, and `"Automatically check for updates"`. For the manual update action, assert `buttons` includes at least one entry with `enabled: true` (SwiftUI exposes the bordered button as `AXButton` / desc `"button"` without a title). Note: the grouped-`Form` **section headers** (`General` / `Menu Bar` / `Updates`) render visually but are **not** emitted as `AXStaticText` by `window-dump`, so assert on the row labels + version, not the section titles. If you need a raw AppleScript equivalent, the same idea is (the window is titled `"Settings"`):
 
 ```applescript
 tell application "System Events" to tell application process "PeekBar"

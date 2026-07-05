@@ -183,9 +183,9 @@ if command == "--audit":
 if command in ("", "--help", "-h"):
     print("Usage: scripts/bump-version.sh <new-version> | --check | --audit")
     print("")
-    print("  <new-version>  Bump all declared files to the given version")
-    print("  --check        Show current versions, detect drift")
-    print("  --audit        Check + scan repo for undeclared version references")
+    print("  <new-version>      Bump all declared version files")
+    print("  --check            Show current versions, detect drift")
+    print("  --audit            Check + scan repo for undeclared version references")
     sys.exit(0)
 if command.startswith("--"):
     fail(f"unknown flag '{command}'")

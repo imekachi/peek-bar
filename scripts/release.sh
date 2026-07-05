@@ -117,12 +117,6 @@ read_version() {
   VERSION="${from_project:-$from_plist}"
   [[ -n "$VERSION" ]] || fail "could not determine marketing version from project.yml or Info.plist"
 
-  BUILD_NUMBER="$(awk -F': ' '/^[[:space:]]*CURRENT_PROJECT_VERSION:/ {print $2; exit}' project.yml | tr -d ' "')"
-  if [[ -z "$BUILD_NUMBER" ]]; then
-    BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' PeekBar/Resources/Info.plist 2>/dev/null || true)"
-  fi
-  [[ -n "$BUILD_NUMBER" ]] || fail "could not determine build number from project.yml or Info.plist"
-
   set_release_version "$VERSION"
 }
 
@@ -139,11 +133,76 @@ bump_version() {
   log "Bumping version to $version"
   "$ROOT_DIR/scripts/bump-version.sh" "$version"
   git add project.yml PeekBar/Resources/Info.plist
-  if git diff --cached --quiet -- project.yml PeekBar/Resources/Info.plist; then
-    log "Version already $version; nothing to commit"
-  else
-    git commit -m "chore(release): v$version" -- project.yml PeekBar/Resources/Info.plist
+  git diff --cached --quiet -- project.yml PeekBar/Resources/Info.plist \
+    || git commit -m "chore(release): v$version" -- project.yml PeekBar/Resources/Info.plist
+}
+
+preflight_sparkle_version() {
+  local feed_url feed_xml compare_status
+
+  feed_url="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/appcast.xml"
+  feed_xml="$(curl -fsSL "$feed_url" 2>/dev/null || true)"
+
+  if [[ -z "$feed_xml" ]]; then
+    log "No published appcast found at $feed_url; skipping feed comparison"
+    return 0
   fi
+
+  set +e
+  python3 - "$feed_xml" "$VERSION" <<'PY'
+import re
+import sys
+
+feed_xml = sys.argv[1]
+release_version = sys.argv[2]
+
+def parse_version_parts(marketing: str) -> list[int]:
+    parts: list[int] = []
+    for piece in marketing.split("."):
+        digits = "".join(ch for ch in piece if ch.isdigit())
+        parts.append(int(digits or "0"))
+    while len(parts) < 3:
+        parts.append(0)
+    return parts[:3]
+
+def compare(lhs: str, rhs: str) -> int:
+    lhs_parts = parse_version_parts(lhs)
+    rhs_parts = parse_version_parts(rhs)
+    return (lhs_parts > rhs_parts) - (lhs_parts < rhs_parts)
+
+published_version = re.search(r"<sparkle:version>([^<]+)</sparkle:version>", feed_xml)
+published_short = re.search(
+    r"<sparkle:shortVersionString>([^<]+)</sparkle:shortVersionString>", feed_xml
+)
+published = published_short or published_version
+if not published:
+    sys.exit(0)
+
+published_version_text = published.group(1).strip()
+result = compare(release_version, published_version_text)
+if result < 0:
+    print(
+        f"release version {release_version} must be newer than published {published_version_text}",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+if result == 0:
+    sys.exit(2)
+PY
+  compare_status=$?
+  set -e
+
+  if [[ "$compare_status" == "2" ]]; then
+    if [[ "$FORCE" == "1" ]]; then
+      log "Release version $VERSION matches the published appcast; continuing because -f/--force is set"
+      return 0
+    fi
+    fail "release version $VERSION already matches the published appcast; re-run with -f / --force to republish"
+  elif [[ "$compare_status" != "0" ]]; then
+    fail "release version $VERSION is not newer than the published appcast"
+  fi
+
+  log "Release version $VERSION is newer than the published appcast"
 }
 
 resolve_sparkle_tools() {
@@ -345,7 +404,7 @@ build_dry_run_app() {
   <key>CFBundleShortVersionString</key>
   <string>${VERSION}</string>
   <key>CFBundleVersion</key>
-  <string>${BUILD_NUMBER}</string>
+  <string>${VERSION}</string>
   <key>LSMinimumSystemVersion</key>
   <string>${minimum_version}</string>
 </dict>
@@ -390,6 +449,36 @@ generate_appcast() {
     --download-url-prefix "$DOWNLOAD_PREFIX" \
     "$STAGE_DIR"
   [[ -f "$STAGE_DIR/appcast.xml" ]] || fail "appcast.xml was not generated in $STAGE_DIR"
+  set_appcast_sparkle_version
+}
+
+set_appcast_sparkle_version() {
+  local appcast="$STAGE_DIR/appcast.xml"
+  local sparkle_version="$VERSION"
+
+  log "Setting sparkle:version to ${sparkle_version} in appcast.xml"
+  if ! python3 - "$appcast" "$sparkle_version" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+appcast_path = Path(sys.argv[1])
+sparkle_version = sys.argv[2]
+text = appcast_path.read_text()
+updated, count = re.subn(
+    r"(<sparkle:version>)[^<]*(</sparkle:version>)",
+    rf"\g<1>{sparkle_version}\g<2>",
+    text,
+    count=1,
+)
+if count != 1:
+    print("ERROR: could not update sparkle:version in appcast.xml", file=sys.stderr)
+    sys.exit(1)
+appcast_path.write_text(updated)
+PY
+  then
+    fail "failed to set sparkle:version in appcast.xml"
+  fi
 }
 
 appcast_has_signature_metadata() {
@@ -598,6 +687,7 @@ resolve_release_version() {
   fi
 
   preflight_release_tag
+  preflight_sparkle_version
 }
 
 main() {

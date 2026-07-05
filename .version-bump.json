@@ -1,7 +1,9 @@
 {
   "files": [
     { "path": "project.yml", "type": "xcodegen-yaml", "field": "MARKETING_VERSION" },
-    { "path": "PeekBar/Resources/Info.plist", "type": "plist", "field": "CFBundleShortVersionString" }
+    { "path": "PeekBar/Resources/Info.plist", "type": "plist", "field": "CFBundleShortVersionString" },
+    { "path": "project.yml", "type": "xcodegen-yaml", "field": "CURRENT_PROJECT_VERSION" },
+    { "path": "PeekBar/Resources/Info.plist", "type": "plist", "field": "CFBundleVersion" }
   ],
   "audit": {
     "exclude": [

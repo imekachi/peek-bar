@@ -18,7 +18,8 @@ struct SettingsView: View {
             Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
         guard
             let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String,
-            !build.isEmpty
+            !build.isEmpty,
+            build != short
         else {
             return short
         }
