@@ -2,9 +2,15 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
+    private let manualUpdateChecker: ManualUpdateChecking
 
-    init(settings: SettingsStore) {
+    init(settings: SettingsStore, manualUpdateChecker: ManualUpdateChecking) {
         _settings = ObservedObject(wrappedValue: settings)
+        self.manualUpdateChecker = manualUpdateChecker
+    }
+
+    func performManualUpdateCheck() {
+        manualUpdateChecker.checkManually()
     }
 
     private var versionString: String {
@@ -48,10 +54,8 @@ struct SettingsView: View {
 
                 LabeledContent("Version", value: versionString)
 
-                // Disabled until spec 0007 implements update checking.
-                Button("Check for Updates…") { }
+                Button("Check for Updates…", action: performManualUpdateCheck)
                     .buttonStyle(.bordered)
-                    .disabled(true)
             }
         }
         .formStyle(.grouped)

@@ -4,6 +4,12 @@ options:
     macOS: "26.0"
   createIntermediateGroups: true
   groupSortPosition: top
+  preGenCommand: bash scripts/sync-local-signing.sh
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.6.4
 
 configs:
   Debug: debug
@@ -23,12 +29,13 @@ targets:
       - path: PeekBar
         excludes:
           - Resources/Info.plist
-          - Resources/PeekBar.entitlements
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.imekachi.PeekBar
         INFOPLIST_FILE: PeekBar/Resources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: PeekBar/Resources/PeekBar.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_VERSION: "6.0"

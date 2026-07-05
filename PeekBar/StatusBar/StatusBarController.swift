@@ -19,6 +19,7 @@ final class StatusBarController: NSObject {
   init(
     settings: SettingsStore,
     settingsController: SettingsWindowController,
+    manualUpdateChecker: ManualUpdateChecking,
     hideStrategyFactory: HideStrategyFactory = { separatorItem, toggleItem in
       LengthInflationStrategy(separatorItem: separatorItem, toggleItem: toggleItem)
     }
@@ -38,7 +39,10 @@ final class StatusBarController: NSObject {
     self.separatorItem = separatorItem
     self.hideStrategy = hideStrategyFactory(separatorItem, toggleItem)
 
-    let menuBundle = StatusItemMenu.makeMenu(settingsController: settingsController)
+    let menuBundle = StatusItemMenu.makeMenu(
+      settingsPresenter: settingsController,
+      manualUpdateChecker: manualUpdateChecker
+    )
     self.contextMenu = menuBundle.menu
     self.menuTarget = menuBundle.target
 

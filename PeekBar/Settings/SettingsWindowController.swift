@@ -2,11 +2,18 @@ import AppKit
 import SwiftUI
 
 @MainActor
-final class SettingsWindowController: NSWindowController {
-    private let settings: SettingsStore
+protocol SettingsPresenting: AnyObject {
+    func show()
+}
 
-    init(settings: SettingsStore) {
+@MainActor
+final class SettingsWindowController: NSWindowController, SettingsPresenting {
+    private let settings: SettingsStore
+    private let manualUpdateChecker: ManualUpdateChecking
+
+    init(settings: SettingsStore, manualUpdateChecker: ManualUpdateChecking) {
         self.settings = settings
+        self.manualUpdateChecker = manualUpdateChecker
         super.init(window: nil)
     }
 
@@ -17,7 +24,12 @@ final class SettingsWindowController: NSWindowController {
 
     func show() {
         if window == nil {
-            let hostingController = NSHostingController(rootView: SettingsView(settings: settings))
+            let hostingController = NSHostingController(
+                rootView: SettingsView(
+                    settings: settings,
+                    manualUpdateChecker: manualUpdateChecker
+                )
+            )
             // Drive the window size from the SwiftUI content's fitting size so every section is
             // visible without scrolling, the way System Settings panes fit their content. A frame
             // autosave name is intentionally omitted: a stale saved height would re-clip content.

@@ -20,7 +20,12 @@ xcuserdata/
 Signing.xcconfig
 *.local.xcconfig
 
-# Sparkle / update signing keys (future, must stay local)
+# Local-only release env and staging output (never commit signing inputs or artifacts)
+.env.local
+release/
+
+# Sparkle / update signing keys (must stay local)
+.sparkle/
 *.private-key
 eddsa_priv*
 dsa_priv.pem

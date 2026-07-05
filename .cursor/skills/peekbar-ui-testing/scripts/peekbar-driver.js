@@ -14,7 +14,7 @@ var APP = 'PeekBar';
 var TAP = 1; // kCGSessionEventTap
 var CMD = 1048576; // kCGEventFlagMaskCommand
 var CTRL = 262144; // kCGEventFlagMaskControl
-var MENU_ITEMS_MAX = 3; // enabled: Settings, About, Quit
+var MENU_ITEMS_MAX = 4; // enabled: Settings, Check for updates, About, Quit
 var DRAG_DX_MAX = 400;
 
 // CGEventType numeric constants
@@ -214,14 +214,76 @@ function collectStatic(el, out, depth) {
   }
 }
 
+function collectButtons(el, out, depth) {
+  if (depth > 10) return;
+  var kids;
+  try { kids = el.uiElements(); } catch (e) { return; }
+  for (var i = 0; i < kids.length; i++) {
+    var k = kids[i];
+    var role = '';
+    var desc = '';
+    try { role = k.role(); } catch (e) {}
+    try { desc = k.description(); } catch (e) {}
+    if (role === 'AXButton' && desc === 'button') {
+      var title = '';
+      var enabled = null;
+      try { title = k.title(); } catch (e) {}
+      if (!title || typeof title !== 'string') {
+        try { title = k.value(); } catch (e) {}
+      }
+      try { enabled = k.enabled(); } catch (e) {}
+      out.push({
+        title: title && typeof title === 'string' ? title : null,
+        enabled: enabled
+      });
+    }
+    collectButtons(k, out, depth + 1);
+  }
+}
+
 function windowDump() {
   var win = settingsWindow();
-  if (!win) return { window: null, texts: [] };
+  if (!win) return { window: null, texts: [], buttons: [] };
   var out = [];
+  var buttons = [];
   collectStatic(win, out, 0);
+  collectButtons(win, buttons, 0);
   var title = '';
   try { title = win.title(); } catch (e) {}
-  return { window: title, texts: out };
+  return { window: title, texts: out, buttons: buttons };
+}
+
+function menuDump() {
+  var to = toggle();
+  if (typeof to === 'string') return to;
+  click(to.cx, to.cy, { flags: CTRL });
+  sleep(0.4);
+  var items = [];
+  try {
+    var mbs = proc().menuBars[0].menuBarItems;
+    for (var i = 0; i < mbs.length; i++) {
+      var d = '';
+      try { d = mbs[i].description(); } catch (e) {}
+      if (!/collapse|expand/i.test(d)) continue;
+      var menu = mbs[i].menus[0];
+      var menuItems = menu.menuItems();
+      for (var j = 0; j < menuItems.length; j++) {
+        var name = '';
+        var enabled = null;
+        try { name = menuItems[j].name(); } catch (e) {}
+        try { enabled = menuItems[j].enabled(); } catch (e) {}
+        if (!name) continue;
+        items.push({ index: items.length + 1, name: name, enabled: enabled });
+      }
+    }
+  } catch (e) {
+    key(53);
+    sleep(0.2);
+    return 'menu-dump: failed to read menu items — ' + e;
+  }
+  key(53);
+  sleep(0.2);
+  return { menuItems: items };
 }
 
 function validateMenuN(argv, label) {
@@ -249,10 +311,9 @@ function menuInteractionResult(failureMsg) {
 }
 
 // Open the context menu and activate the Nth enabled item via keyboard, all in
-// ONE script run. Enabled order: 1=Settings, 2=About, 3=Quit ("Check for
-// updates…" is disabled and skipped by keyboard nav). Doing this in a single
-// run keeps the click->Down->Return timing tight; splitting menu-open and
-// menu-key across separate MCP calls is racy and unreliable.
+// ONE script run. Enabled order: 1=Settings, 2=Check for updates…, 3=About,
+// 4=Quit. Doing this in a single run keeps the click->Down->Return timing
+// tight; splitting menu-open and menu-key across separate MCP calls is racy.
 function menuSelect(n) {
   var to = toggle();
   if (typeof to === 'string') return to;
@@ -363,8 +424,15 @@ function run(argv) {
     return 'menu-key: Down x' + nk + ' + Return';
   }
 
+  if (cmd === 'menu-dump') {
+    if (!peekBarRunning()) return 'PeekBar process not running';
+    var dump = menuDump();
+    if (typeof dump === 'string') return dump;
+    return JSON.stringify(dump, null, 2);
+  }
+
   if (cmd === 'menu-select') {
-    // One-shot reliable menu activation. n: 1=Settings, 2=About, 3=Quit.
+    // One-shot reliable menu activation. n: 1=Settings, 2=Check for updates…, 3=About, 4=Quit.
     var sel = validateMenuN(argv, 'menu-select');
     if (typeof sel === 'string') return sel;
     var selErr = menuSelect(sel);
@@ -451,7 +519,7 @@ function run(argv) {
     return JSON.stringify(shot, null, 2);
   }
 
-  return 'usage: state | toggle | collapse | expand | menu-open | menu-key <n> | ' +
+  return 'usage: state | toggle | collapse | expand | menu-open | menu-dump | menu-key <n> | ' +
     'menu-select <n> | open-settings | open-settings-coord | window | window-dump | ' +
     'close-window | drag <idx> <dx> | screenshot [path]';
 }

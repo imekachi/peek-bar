@@ -1,0 +1,21 @@
+{
+  "files": [
+    { "path": "project.yml", "type": "xcodegen-yaml", "field": "MARKETING_VERSION" },
+    { "path": "PeekBar/Resources/Info.plist", "type": "plist", "field": "CFBundleShortVersionString" }
+  ],
+  "audit": {
+    "exclude": [
+      ".git",
+      ".super-exec",
+      ".cursor",
+      ".sparkle",
+      ".build",
+      ".swiftpm",
+      "build",
+      "DerivedData",
+      "PeekBar.xcodeproj",
+      "release",
+      ".version-bump.json"
+    ]
+  }
+}
