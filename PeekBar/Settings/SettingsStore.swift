@@ -7,6 +7,7 @@ final class SettingsStore: ObservableObject {
     enum StatusItemAutosaveName {
         static let toggleItem = "PeekBarToggleItem"
         static let separatorItem = "PeekBarSeparatorItem"
+        static let secondarySeparatorItem = "PeekBarSecondarySeparatorItem"
     }
 
     enum AutoCollapseInterval: Int, CaseIterable {
@@ -19,6 +20,7 @@ final class SettingsStore: ObservableObject {
         static let launchAtLogin = "peekbar.launchAtLogin"
         static let autoCollapseInterval = "peekbar.autoCollapseInterval"
         static let alwaysHiddenEnabled = "peekbar.alwaysHiddenEnabled"
+        static let isAlwaysHiddenRevealed = "peekbar.isAlwaysHiddenRevealed"
         static let automaticallyCheckForUpdates = "peekbar.automaticallyCheckForUpdates"
     }
 
@@ -43,7 +45,16 @@ final class SettingsStore: ObservableObject {
     }
 
     @Published var alwaysHiddenEnabled: Bool {
-        didSet { userDefaults.set(alwaysHiddenEnabled, forKey: Key.alwaysHiddenEnabled) }
+        didSet {
+            userDefaults.set(alwaysHiddenEnabled, forKey: Key.alwaysHiddenEnabled)
+            if alwaysHiddenEnabled && !oldValue {
+                isAlwaysHiddenRevealed = true
+            }
+        }
+    }
+
+    @Published var isAlwaysHiddenRevealed: Bool {
+        didSet { userDefaults.set(isAlwaysHiddenRevealed, forKey: Key.isAlwaysHiddenRevealed) }
     }
 
     @Published var automaticallyCheckForUpdates: Bool {
@@ -63,6 +74,7 @@ final class SettingsStore: ObservableObject {
             rawValue: userDefaults.integer(forKey: Key.autoCollapseInterval)
         ) ?? .off
         alwaysHiddenEnabled = userDefaults.bool(forKey: Key.alwaysHiddenEnabled)
+        isAlwaysHiddenRevealed = userDefaults.bool(forKey: Key.isAlwaysHiddenRevealed)
         automaticallyCheckForUpdates = userDefaults.bool(forKey: Key.automaticallyCheckForUpdates)
     }
 }

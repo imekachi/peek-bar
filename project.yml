@@ -40,7 +40,7 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_VERSION: "6.0"
         CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: 0.1.0
+        MARKETING_VERSION: 0.2.0
     configFiles:
       Debug: Signing.xcconfig.example
       Release: Signing.xcconfig.example

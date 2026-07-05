@@ -47,4 +47,32 @@ final class HideStrategyTests: XCTestCase {
 
         XCTAssertGreaterThanOrEqual(width, screenWidth)
     }
+
+    @MainActor
+    func testPrimaryCollapseRefusesWhenBoundaryIsRightOfToggle() {
+        let toggleFrame = CGRect(x: 100, y: 0, width: 24, height: 24)
+        let separatorFrame = CGRect(x: 140, y: 0, width: 8, height: 24)
+
+        let shouldRefuse = LengthInflationStrategy.shouldRefuseCollapse(
+            separatorFrame: separatorFrame,
+            toggleFrame: toggleFrame
+        )
+
+        XCTAssertTrue(shouldRefuse)
+    }
+
+    @MainActor
+    func testAlwaysHiddenFallbackAlsoRefusesWhenBoundaryIsRightOfToggle() {
+        let toggleFrame = CGRect(x: 100, y: 0, width: 24, height: 24)
+        let separatorFrame = CGRect(x: 140, y: 0, width: 8, height: 24)
+
+        let shouldRefuse = LengthInflationStrategy.shouldRefuseCollapse(
+            separatorFrame: separatorFrame,
+            toggleFrame: toggleFrame
+        )
+
+        // Ideal spec behavior excludes Toggle Icon by identity. With this release's length-
+        // inflation backend, secondary uses the same recoverability fallback as primary.
+        XCTAssertTrue(shouldRefuse)
+    }
 }

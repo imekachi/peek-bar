@@ -16,18 +16,19 @@ Some menu-bar icons are ones the user almost never needs and doesn't want to see
 ## Behavior / Requirements
 - The always-hidden feature is disabled by default and enabled via a Settings toggle (see 0002).
 - When disabled, no Secondary Separator appears; only the Toggle Icon and the solid Primary Separator (see 0001) are present.
-- When enabled, PeekBar shows the Secondary Separator — a **semi-translucent, dashed** vertical line — in the menu bar. Its dashed, translucent styling makes it visually distinct from the solid Primary Separator, so the always-hidden boundary reads differently from the normal-collapse boundary.
+- When enabled, PeekBar immediately shows the Secondary Separator — a **semi-translucent, dashed** vertical line — in the menu bar, with the Always-hidden zone revealed by default so the user sees the new boundary right away. Its dashed, translucent styling makes it visually distinct from the solid Primary Separator, so the always-hidden boundary reads differently from the normal-collapse boundary.
 - Items to the left of the Secondary Separator (the Always-hidden zone) are hidden at all times, except the Toggle Icon, which is never hidden.
 - Default layout, left → right: `[always-hidden items]  ┊(dashed)  [normal-collapse items]  │(solid)  › `, where `┊` is the Secondary Separator and `│` is the Primary Separator. Positions are user-adjustable via ⌘-drag.
-- The positioning rule holds regardless of drag position: everything to the left of the Secondary Separator is treated as always-hidden except the Toggle Icon — even if the Secondary Separator is dragged to the right of `›`, or becomes the leftmost item.
+- The ideal positioning rule is identity-based: everything to the left of the Secondary Separator is treated as always-hidden except the Toggle Icon, which must remain recoverable even if the Secondary Separator is dragged to the right of `›`, or becomes the leftmost item.
+- Accepted fallback for the current status-item inflation implementation: if hiding via the Secondary Separator would cross or hide the Toggle Icon (for example, after dragging the Secondary Separator to the right of `›`), PeekBar refuses that hide/collapse action, matching the Primary Separator's recoverability behavior.
 - When the Always-hidden zone is hidden, the right-click menu shows "Show Always Hidden Icons".
 - Choosing "Show Always Hidden Icons" reveals the Always-hidden zone; the menu item then reads "Hide Always Hidden Icons".
 - Choosing "Hide Always Hidden Icons" re-hides the zone and the label reverts.
-- The enabled/disabled state and the current reveal/hide state persist across relaunch.
+- The enabled/disabled state and the current reveal/hide state persist across relaunch while the feature remains enabled. Disabling and later re-enabling the feature returns to the revealed default.
 
 ## Domain terms
 See docs/specs/CONTEXT.md. Uses: Secondary Separator, Always-hidden zone, Toggle Icon, Show Always Hidden Icons / Hide Always Hidden Icons, Default layout, ⌘-drag arrange.
 
 ## Decisions
-- The Toggle Icon is excluded from always-hiding by identity (it is PeekBar's toggle), not by position, so any ⌘-drag arrangement is safe and never hides the app's own control.
+- The Toggle Icon is ideally excluded from always-hiding by identity (it is PeekBar's toggle), not by position, so any ⌘-drag arrangement remains recoverable. The current inflatable status-item backend cannot safely hide across the Toggle Icon while excluding only that item, so this release intentionally uses the Primary Separator's refusal behavior as the fallback when a hide would cross the Toggle Icon.
 - The Secondary Separator is styled semi-translucent and dashed to distinguish the permanently-hidden boundary from the solid Primary Separator's normal-collapse boundary (see 0001). Both separators are required, inflatable status items — a single-item design is not achievable (see docs/adr/0002-two-status-items-minimum.md).

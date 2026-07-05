@@ -26,6 +26,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(store.launchAtLogin)
         XCTAssertEqual(store.autoCollapseInterval, .off)
         XCTAssertFalse(store.alwaysHiddenEnabled)
+        XCTAssertFalse(store.isAlwaysHiddenRevealed)
         XCTAssertTrue(store.automaticallyCheckForUpdates)
         XCTAssertFalse(store.isCollapsed)
         XCTAssertFalse(store.hasLaunchedBefore)
@@ -37,6 +38,7 @@ final class SettingsStoreTests: XCTestCase {
         store.launchAtLogin = false
         store.autoCollapseInterval = .s30
         store.alwaysHiddenEnabled = true
+        store.isAlwaysHiddenRevealed = true
         store.automaticallyCheckForUpdates = false
         store.isCollapsed = true
         store.hasLaunchedBefore = true
@@ -46,8 +48,44 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(reloaded.launchAtLogin)
         XCTAssertEqual(reloaded.autoCollapseInterval, .s30)
         XCTAssertTrue(reloaded.alwaysHiddenEnabled)
+        XCTAssertTrue(reloaded.isAlwaysHiddenRevealed)
         XCTAssertFalse(reloaded.automaticallyCheckForUpdates)
         XCTAssertTrue(reloaded.isCollapsed)
         XCTAssertTrue(reloaded.hasLaunchedBefore)
+    }
+
+    @MainActor
+    func testEnablingAlwaysHiddenDefaultsToRevealed() {
+        let store = SettingsStore(userDefaults: suite)
+        store.isAlwaysHiddenRevealed = false
+
+        store.alwaysHiddenEnabled = true
+
+        XCTAssertTrue(store.alwaysHiddenEnabled)
+        XCTAssertTrue(store.isAlwaysHiddenRevealed)
+    }
+
+    @MainActor
+    func testReenablingAlwaysHiddenDefaultsBackToRevealed() {
+        let store = SettingsStore(userDefaults: suite)
+        store.alwaysHiddenEnabled = true
+        store.isAlwaysHiddenRevealed = false
+
+        store.alwaysHiddenEnabled = false
+        store.alwaysHiddenEnabled = true
+
+        XCTAssertTrue(store.isAlwaysHiddenRevealed)
+    }
+
+    @MainActor
+    func testPersistedHiddenStateSurvivesRelaunchWhileFeatureRemainsEnabled() {
+        let store = SettingsStore(userDefaults: suite)
+        store.alwaysHiddenEnabled = true
+        store.isAlwaysHiddenRevealed = false
+
+        let reloaded = SettingsStore(userDefaults: suite)
+
+        XCTAssertTrue(reloaded.alwaysHiddenEnabled)
+        XCTAssertFalse(reloaded.isAlwaysHiddenRevealed)
     }
 }
