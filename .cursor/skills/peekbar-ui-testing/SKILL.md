@@ -20,7 +20,7 @@ Drive and assert PeekBar's menu-bar UI from any agent session using the `macos_a
 - SwiftUI/AppKit menu-bar utility, `NSApp.setActivationPolicy(.accessory)` (no Dock icon). Bundle id `com.imekachi.PeekBar`.
 - Two `NSStatusItem`s: the **toggle** (AX description `"Collapse menu bar icons"` when expanded, `"Expand menu bar icons"` when collapsed) and the **separator** (AX description `"status menu"`, a thin vertical line).
 - Left-click the toggle → collapse/expand. Ctrl+left-click the toggle → context menu (shown via `NSMenu.popUp`, NOT attached as `statusItem.menu`).
-- Context menu, enabled order: **Settings** (⌘,), **About**, **Quit** (`"Check for updates…"` sits between Settings and About but is disabled, so keyboard nav skips it).
+- Context menu, enabled order: **Settings** (⌘,), **Check for updates…**, **About**, **Quit** (keyboard `menu-select`: 1=Settings, 2=Check for updates…, 3=About, 4=Quit).
 - Settings is a normal titled `NSWindow` (title `"Settings"`), a grouped `Form` with rows including `Version` / `0.1.0 (1)`, under section headers `General`, `Menu Bar`, `Updates` (the headers render visually but are not exposed as `AXStaticText` in `window-dump`). The driver's `settingsWindow()` matches `/settings/i` but falls back to the first window.
 
 ## Prerequisites
@@ -64,11 +64,12 @@ Invoke `macos_automator`'s `execute_script` with the driver's absolute path, `la
 | `["state"]` / `["items"]` | Read AX state: `collapsed`, `toggleLabel`, and each item's position/size/center (`items` is an alias — same JSON). | `{"collapsed":false,"toggleLabel":"Collapse menu bar icons","items":[...]}` |
 | `["toggle"]` | One left-click on the toggle, then re-read state. | state with `collapsed` flipped |
 | `["collapse"]` / `["expand"]` | Idempotently reach the desired state. | state with `collapsed` true/false |
-| `["menu-select","1"]` | **Reliable** one-shot: open the context menu and activate the Nth enabled item via keyboard (1=Settings, 2=About, 3=Quit), then dump the resulting window. | Settings window dump (see below) |
+| `["menu-select","1"]` | **Reliable** one-shot: open the context menu and activate the Nth enabled item via keyboard (1=Settings, 2=Check for updates…, 3=About, 4=Quit), then dump the resulting window. | Settings window dump (see below) |
+| `["menu-dump"]` | Open the context menu, read enabled menu item names/states, dismiss with Escape. Safe one-shot (no PeekBar AX while modal). | `{"menuItems":[{"index":1,"name":"Settings","enabled":true},…]}` |
 | `["open-settings"]` | Convenience for `menu-select 1`; opens Settings and returns its dump. | `{"window":"Settings","texts":["Launch at login","Auto-collapse","Enable always-hidden section","Adds a second separator …","Automatically check for updates","Version","0.1.0 (1)","Settings"]}` |
 | `["open-settings-coord"]` | Coordinate **fallback**: open the menu, then click the Settings row by offset from the toggle center. Use keyboard (`open-settings`); use this only if keyboard nav misbehaves. | same Settings dump |
 | `["window"]` | Count PeekBar windows + first title. | `{"windows":1,"title":"Settings"}` |
-| `["window-dump"]` | Dump the Settings window's static-text values as JSON (for assertions). | `{"window":"Settings","texts":["Launch at login","Auto-collapse","Enable always-hidden section","Adds a second separator …","Automatically check for updates","Version","0.1.0 (1)","Settings"]}` |
+| `["window-dump"]` | Dump the Settings window's static-text values and content buttons as JSON (for assertions). | `{"window":"Settings","texts":[…],"buttons":[{"title":null,"enabled":true}]}` |
 | `["close-window"]` | Click the first window's close button. | `{"closed":true}` or `close-window: no window to close` |
 | `["drag","0","-50"]` | ⌘-drag item at index `0` by `dx` px along the bar (y derived from item geometry, clamped inside the bar). Returns before/after item order. Re-dragging index `0` restores order because `menuBarItems()` order is stable by item identity. | `{"before":[...],"after":[...]}` |
 | `["screenshot","/tmp/peekbar.png"]` | Capture a tight region around the items (excludes the inflated separator) via `screencapture`. | `{"path":"/tmp/peekbar.png","region":"-R...,0,...,28"}` |
@@ -88,7 +89,7 @@ Invoke `macos_automator`'s `execute_script` with the driver's absolute path, `la
 }
 ```
 
-Expected: `texts` contains `"Version"` and `"0.1.0 (1)"` (version assertion) plus the row labels `"Launch at login"`, `"Auto-collapse"`, `"Enable always-hidden section"`, and `"Automatically check for updates"`. Note: the grouped-`Form` **section headers** (`General` / `Menu Bar` / `Updates`) render visually but are **not** emitted as `AXStaticText` by `window-dump`, so assert on the row labels + version, not the section titles. If you need a raw AppleScript equivalent, the same idea is (the window is titled `"Settings"`):
+Expected: `texts` contains `"Version"` and `"0.1.0 (1)"` (version assertion) plus the row labels `"Launch at login"`, `"Auto-collapse"`, `"Enable always-hidden section"`, and `"Automatically check for updates"`. For the manual update action, assert `buttons` includes at least one entry with `enabled: true` (SwiftUI exposes the bordered button as `AXButton` / desc `"button"` without a title). Note: the grouped-`Form` **section headers** (`General` / `Menu Bar` / `Updates`) render visually but are **not** emitted as `AXStaticText` by `window-dump`, so assert on the row labels + version, not the section titles. If you need a raw AppleScript equivalent, the same idea is (the window is titled `"Settings"`):
 
 ```applescript
 tell application "System Events" to tell application process "PeekBar"
