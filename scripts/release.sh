@@ -218,10 +218,22 @@ create_update_archive() {
 }
 
 sign_update_archive() {
-  local signature_output
+  local signature_output redacted_output
+
   log "Signing update archive with Sparkle EdDSA key"
   signature_output="$("$SPARKLE_BIN_DIR/sign_update" --ed-key-file "$SPARKLE_KEY_FILE" "$UPDATE_ARCHIVE_PATH")"
-  echo "$signature_output" | sed 's/sparkle:edSignature="[^"]*"/sparkle:edSignature="[REDACTED]"/'
+
+  UPDATE_ED_SIGNATURE="$(printf '%s\n' "$signature_output" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')"
+  UPDATE_DSA_SIGNATURE="$(printf '%s\n' "$signature_output" | sed -n 's/.*sparkle:dsaSignature="\([^"]*\)".*/\1/p')"
+  UPDATE_ARCHIVE_LENGTH="$(printf '%s\n' "$signature_output" | sed -n 's/.*length="\([^"]*\)".*/\1/p')"
+
+  if [[ -z "$UPDATE_ED_SIGNATURE" && -z "$UPDATE_DSA_SIGNATURE" ]]; then
+    fail "sign_update did not produce sparkle:edSignature or sparkle:dsaSignature for $UPDATE_ARCHIVE_PATH"
+  fi
+  [[ -n "$UPDATE_ARCHIVE_LENGTH" ]] || fail "sign_update did not return archive length for $UPDATE_ARCHIVE_PATH"
+
+  redacted_output="$(printf '%s\n' "$signature_output" | sed -E 's/sparkle:(ed|dsa)Signature="[^"]*"/sparkle:\1Signature="[REDACTED]"/g')"
+  echo "$redacted_output"
 }
 
 generate_appcast() {
@@ -233,11 +245,111 @@ generate_appcast() {
   [[ -f "$STAGE_DIR/appcast.xml" ]] || fail "appcast.xml was not generated in $STAGE_DIR"
 }
 
+appcast_has_signature_metadata() {
+  local appcast="$STAGE_DIR/appcast.xml"
+  grep -qE 'sparkle:(edSignature|dsaSignature)=' "$appcast"
+}
+
+embed_update_signature_in_appcast() {
+  local appcast="$STAGE_DIR/appcast.xml"
+
+  if appcast_has_signature_metadata; then
+    return 0
+  fi
+
+  log "Embedding Sparkle signature metadata into appcast.xml"
+  if ! python3 - "$appcast" "$ARCHIVE_NAME" "$UPDATE_ED_SIGNATURE" "$UPDATE_DSA_SIGNATURE" "$UPDATE_ARCHIVE_LENGTH" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+appcast_path = Path(sys.argv[1])
+archive_name = sys.argv[2]
+ed_signature = sys.argv[3]
+dsa_signature = sys.argv[4]
+length = sys.argv[5]
+
+text = appcast_path.read_text()
+if re.search(r"sparkle:(edSignature|dsaSignature)=", text):
+    sys.exit(0)
+
+pattern = re.compile(
+    r'(<enclosure\b[^>]*\burl="[^"]*' + re.escape(archive_name) + r'"[^>]*?)\s*/>'
+)
+match = pattern.search(text)
+if not match:
+    print(f"ERROR: no enclosure found for {archive_name}", file=sys.stderr)
+    sys.exit(1)
+
+prefix = match.group(1).rstrip()
+attrs = []
+if ed_signature:
+    attrs.append(f'sparkle:edSignature="{ed_signature}"')
+if dsa_signature:
+    attrs.append(f'sparkle:dsaSignature="{dsa_signature}"')
+if not attrs:
+    print("ERROR: no Sparkle signature attributes available to embed", file=sys.stderr)
+    sys.exit(1)
+
+if re.search(r'\blength="', prefix):
+    prefix = re.sub(r'\blength="[^"]*"', f'length="{length}"', prefix, count=1)
+else:
+    attrs.append(f'length="{length}"')
+
+replacement = f"{prefix} {' '.join(attrs)} />"
+text = text[: match.start()] + replacement + text[match.end() :]
+appcast_path.write_text(text)
+PY
+  then
+    fail "failed to embed Sparkle signature metadata into appcast.xml"
+  fi
+}
+
+verify_appcast_signatures() {
+  local appcast="$STAGE_DIR/appcast.xml"
+
+  if ! appcast_has_signature_metadata; then
+    fail "appcast.xml is missing Sparkle signature metadata (sparkle:edSignature or sparkle:dsaSignature)"
+  fi
+
+  if ! grep -q "$ARCHIVE_NAME" "$appcast"; then
+    fail "appcast.xml does not reference update archive $ARCHIVE_NAME"
+  fi
+}
+
 verify_staged_assets() {
   local asset
   for asset in "$ARCHIVE_NAME" "appcast.xml"; do
     [[ -f "$STAGE_DIR/$asset" ]] || fail "expected staged asset missing: $STAGE_DIR/$asset"
   done
+  verify_appcast_signatures
+}
+
+ensure_release_tag() {
+  local commit local_sha remote_sha
+
+  commit="$(git rev-parse HEAD)"
+
+  if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+    local_sha="$(git rev-parse "refs/tags/$TAG^{commit}")"
+    [[ "$local_sha" == "$commit" ]] \
+      || fail "local tag $TAG points to $local_sha, not release commit $commit; delete or move the tag manually before publishing"
+    log "Local tag $TAG already points to $commit"
+  elif git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+    remote_sha="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
+    [[ "$remote_sha" == "$commit" ]] \
+      || fail "remote tag $TAG points to $remote_sha, not release commit $commit; public release tags cannot be rewritten"
+    log "Fetching existing remote tag $TAG at $commit"
+    git fetch origin "refs/tags/$TAG:refs/tags/$TAG"
+  else
+    log "Creating tag $TAG at $commit"
+    git tag -a "$TAG" -m "$TAG" "$commit"
+    log "Pushing tag $TAG"
+    git push origin "$TAG"
+  fi
+
+  git rev-parse -q --verify "refs/tags/$TAG" >/dev/null \
+    || fail "release tag $TAG is missing after tag preparation"
 }
 
 publish_release() {
@@ -250,15 +362,7 @@ publish_release() {
   log "Pushing branch $branch"
   git push origin "$branch"
 
-  if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-    log "Tag $TAG exists locally; moving to $commit"
-    git tag -f -a "$TAG" -m "$TAG" "$commit"
-    git push -f origin "$TAG"
-  else
-    log "Tagging $commit as $TAG"
-    git tag -a "$TAG" -m "$TAG" "$commit"
-    git push origin "$TAG"
-  fi
+  ensure_release_tag
 
   prev_tag="$(git tag --list 'v*' --sort=-v:refname | grep -vx "$TAG" | head -n1 || true)"
   if [[ -n "$prev_tag" ]]; then
@@ -317,6 +421,7 @@ main() {
   create_update_archive
   sign_update_archive
   generate_appcast
+  embed_update_signature_in_appcast
   verify_staged_assets
 
   log "Staged assets in $STAGE_DIR:"
