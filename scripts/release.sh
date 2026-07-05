@@ -134,33 +134,8 @@ set_release_version() {
 bump_version() {
   local version="$1"
 
-  [[ "$version" =~ ^[0-9]+(\.[0-9]+){2}([-.][0-9A-Za-z]+)?$ ]] \
-    || fail "version '$version' is not a supported release version (expected SemVer like 0.2.0)"
-
   log "Bumping version to $version"
-  python3 - "$version" <<'PY'
-import re
-import sys
-from pathlib import Path
-
-version = sys.argv[1]
-project_path = Path("project.yml")
-text = project_path.read_text()
-updated, count = re.subn(
-    r"(^[ \t]*MARKETING_VERSION:[ \t]*)[^\n#]+",
-    rf"\g<1>{version}",
-    text,
-    count=1,
-    flags=re.MULTILINE,
-)
-if count != 1:
-    print("ERROR: could not update MARKETING_VERSION in project.yml", file=sys.stderr)
-    sys.exit(1)
-project_path.write_text(updated)
-PY
-
-  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" PeekBar/Resources/Info.plist
-
+  "$ROOT_DIR/scripts/bump-version.sh" "$version"
   git add project.yml PeekBar/Resources/Info.plist
   if git diff --cached --quiet -- project.yml PeekBar/Resources/Info.plist; then
     log "Version already $version; nothing to commit"
