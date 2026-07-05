@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="PeekBar app icon source">
+  <title>PeekBar App Icon Source</title>
+  <desc>
+    Native macOS app icon master: graphite/off-white diagonal split (bottom-left dark,
+    top-right light) with a centered right-facing 90-degree chevron. Glyph stroke inverts
+    across the same diagonal boundary.
+  </desc>
+
+  <!-- macOS squircle field: corner radius ~22.37% of canvas -->
+  <defs>
+    <clipPath id="icon-field">
+      <rect width="1024" height="1024" rx="229" ry="229"/>
+    </clipPath>
+
+    <!-- Diagonal split: top-left (0,0) to bottom-right (1024,1024) -->
+    <clipPath id="half-dark">
+      <polygon points="0,0 0,1024 1024,1024"/>
+    </clipPath>
+    <clipPath id="half-light">
+      <polygon points="0,0 1024,0 1024,1024"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#icon-field)">
+    <!-- Background halves -->
+    <polygon points="0,0 0,1024 1024,1024" fill="#3A3A3C"/>
+    <polygon points="0,0 1024,0 1024,1024" fill="#F4F4F5"/>
+
+    <!--
+      Right-facing chevron: 90-degree vertex, round caps/joins, scaled from menu-bar
+      glyph ratios (armWidth = armHeight / 2, stroke ~16.4% of arm height) with macOS
+      optical padding: bbox ~288x508 centered in the 1024 canvas (roughly middle half).
+    -->
+    <g
+      fill="none"
+      stroke-width="72"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <!-- Light stroke over dark (bottom-left) half -->
+      <path
+        clip-path="url(#half-dark)"
+        stroke="#F4F4F5"
+        d="M 402 292 L 622 512 L 402 732"
+      />
+      <!-- Dark stroke over light (top-right) half -->
+      <path
+        clip-path="url(#half-light)"
+        stroke="#3A3A3C"
+        d="M 402 292 L 622 512 L 402 732"
+      />
+    </g>
+  </g>
+</svg>
