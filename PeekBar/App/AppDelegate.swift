@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        registerApplicationIcon()
         StartupLog.emit("PeekBar: launched")
 
         let statusBar = StatusBarController(
@@ -32,5 +33,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // the space, but resetting the separator first guarantees icons reappear immediately.
         statusBarController?.expandForShutdown()
         StartupLog.emit("PeekBar: terminating — icons restored")
+    }
+
+    private func registerApplicationIcon() {
+        guard
+            let iconURL = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+            let icon = NSImage(contentsOf: iconURL)
+        else {
+            return
+        }
+
+        NSApp.applicationIconImage = icon
     }
 }
