@@ -2,54 +2,93 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="PeekBar app icon source">
   <title>PeekBar App Icon Source</title>
   <desc>
-    Native macOS app icon master: graphite/off-white diagonal split (bottom-left dark,
-    top-right light) with a centered right-facing 90-degree chevron. Glyph stroke inverts
-    across the same diagonal boundary.
+    Native macOS app icon master: darker graphite gradient field with a polished,
+    centered right-facing chevron inspired by PeekBar's toggle glyph.
   </desc>
 
-  <!-- macOS squircle field: corner radius ~22.37% of canvas -->
+  <!-- macOS rounded app-icon field: restrained, system-adjacent geometry. -->
   <defs>
     <clipPath id="icon-field">
-      <rect width="1024" height="1024" rx="229" ry="229"/>
+      <rect width="1024" height="1024" rx="224" ry="224"/>
     </clipPath>
 
-    <!-- Diagonal split: top-left (0,0) to bottom-right (1024,1024) -->
-    <clipPath id="half-dark">
-      <polygon points="0,0 0,1024 1024,1024"/>
-    </clipPath>
-    <clipPath id="half-light">
-      <polygon points="0,0 1024,0 1024,1024"/>
-    </clipPath>
+    <linearGradient id="background-gradient" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#303746"/>
+      <stop offset="0.48" stop-color="#1D2330"/>
+      <stop offset="1" stop-color="#10131A"/>
+    </linearGradient>
+
+    <radialGradient id="top-highlight" cx="362" cy="92" r="720" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="0.52" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="bottom-depth" cx="690" cy="902" r="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#03050A" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#03050A" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="mark-gradient" x1="396" y1="282" x2="662" y2="742" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.58" stop-color="#F2F6FA"/>
+      <stop offset="1" stop-color="#D7E0EA"/>
+    </linearGradient>
+
+    <filter id="mark-shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
   </defs>
 
   <g clip-path="url(#icon-field)">
-    <!-- Background halves -->
-    <polygon points="0,0 0,1024 1024,1024" fill="#3A3A3C"/>
-    <polygon points="0,0 1024,0 1024,1024" fill="#F4F4F5"/>
+    <!-- Dark native surface with restrained macOS-style depth. -->
+    <rect width="1024" height="1024" fill="url(#background-gradient)"/>
+    <rect width="1024" height="1024" fill="url(#top-highlight)"/>
+    <rect width="1024" height="1024" fill="url(#bottom-depth)"/>
 
     <!--
-      Right-facing chevron: 90-degree vertex, round caps/joins, scaled from menu-bar
-      glyph ratios (armWidth = armHeight / 2, stroke ~16.4% of arm height) with macOS
-      optical padding: bbox ~288x508 centered in the 1024 canvas (roughly middle half).
+      Right-facing chevron: same visual language as the menu-bar toggle, refined into a
+      bolder app-icon mark with generous optical padding and native depth.
     -->
     <g
       fill="none"
-      stroke-width="72"
+      stroke-width="104"
       stroke-linecap="round"
       stroke-linejoin="round"
+      filter="url(#mark-shadow)"
     >
-      <!-- Light stroke over dark (bottom-left) half -->
+      <!-- Dark under-stroke gives the pale mark a crisp edge on the gradient surface. -->
       <path
-        clip-path="url(#half-dark)"
-        stroke="#F4F4F5"
-        d="M 402 292 L 622 512 L 402 732"
+        stroke="#070A10"
+        stroke-opacity="0.42"
+        d="M 404 284 L 636 512 L 404 740"
       />
-      <!-- Dark stroke over light (top-right) half -->
       <path
-        clip-path="url(#half-light)"
-        stroke="#3A3A3C"
-        d="M 402 292 L 622 512 L 402 732"
+        stroke="url(#mark-gradient)"
+        d="M 404 284 L 636 512 L 404 740"
       />
     </g>
+
+    <!-- Fine top-left glint, visible at large sizes and harmless at small sizes. -->
+    <path
+      d="M 412 290 L 628 512"
+      fill="none"
+      stroke="#FFFFFF"
+      stroke-opacity="0.22"
+      stroke-width="28"
+      stroke-linecap="round"
+    />
+
+    <!-- Subtle native edge definition. -->
+    <rect
+      width="1024"
+      height="1024"
+      rx="224"
+      ry="224"
+      fill="none"
+      stroke="#000000"
+      stroke-opacity="0.10"
+      stroke-width="2"
+    />
   </g>
 </svg>
