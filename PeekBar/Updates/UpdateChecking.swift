@@ -14,6 +14,12 @@ enum UpdateCheckStatus: Equatable, Sendable {
     case failed
 }
 
+/// Manual update entry points (Settings button, context menu) call through this surface.
+@MainActor
+protocol ManualUpdateChecking: AnyObject {
+    func checkManually()
+}
+
 /// Abstraction over Sparkle update checks so tests can run without network access.
 @MainActor
 protocol UpdateChecking: AnyObject {

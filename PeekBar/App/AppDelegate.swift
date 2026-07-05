@@ -3,7 +3,11 @@ import AppKit
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = SettingsStore()
-    private lazy var settingsController = SettingsWindowController(settings: settings)
+    private lazy var updateController = UpdateController(settings: settings)
+    private lazy var settingsController = SettingsWindowController(
+        settings: settings,
+        manualUpdateChecker: updateController
+    )
     private var statusBarController: StatusBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -11,9 +15,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ApplicationIcon.register()
         StartupLog.emit("PeekBar: launched")
 
+        updateController.start()
+
         let statusBar = StatusBarController(
             settings: settings,
-            settingsController: settingsController
+            settingsController: settingsController,
+            manualUpdateChecker: updateController
         )
         statusBarController = statusBar
 

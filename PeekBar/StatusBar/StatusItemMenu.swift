@@ -4,9 +4,13 @@ import AppKit
 @MainActor
 enum StatusItemMenu {
   static func makeMenu(
-    settingsController: SettingsWindowController
+    settingsPresenter: SettingsPresenting,
+    manualUpdateChecker: ManualUpdateChecking
   ) -> (menu: NSMenu, target: NSObject) {
-    let target = Actions(settingsController: settingsController)
+    let target = Actions(
+      settingsPresenter: settingsPresenter,
+      manualUpdateChecker: manualUpdateChecker
+    )
     let menu = NSMenu()
 
     // ⌘, is best-effort for an LSUIElement accessory app (no main menu bar); it only works while this menu is key.
@@ -20,10 +24,10 @@ enum StatusItemMenu {
 
     let checkForUpdates = NSMenuItem(
       title: "Check for updates…",
-      action: nil,
+      action: #selector(Actions.checkForUpdates(_:)),
       keyEquivalent: ""
     )
-    checkForUpdates.isEnabled = false
+    checkForUpdates.target = target
     menu.addItem(checkForUpdates)
 
     let about = NSMenuItem(
@@ -49,14 +53,23 @@ enum StatusItemMenu {
 
   @MainActor
   private final class Actions: NSObject {
-    private let settingsController: SettingsWindowController
+    private let settingsPresenter: SettingsPresenting
+    private let manualUpdateChecker: ManualUpdateChecking
 
-    init(settingsController: SettingsWindowController) {
-      self.settingsController = settingsController
+    init(
+      settingsPresenter: SettingsPresenting,
+      manualUpdateChecker: ManualUpdateChecking
+    ) {
+      self.settingsPresenter = settingsPresenter
+      self.manualUpdateChecker = manualUpdateChecker
     }
 
     @objc func openSettings(_ sender: Any?) {
-      settingsController.show()
+      settingsPresenter.show()
+    }
+
+    @objc func checkForUpdates(_ sender: Any?) {
+      manualUpdateChecker.checkManually()
     }
 
     @objc func showAbout(_ sender: Any?) {

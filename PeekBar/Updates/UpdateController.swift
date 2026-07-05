@@ -157,6 +157,8 @@ final class UpdateController: NSObject, UpdateCheckDelegate {
     }
 }
 
+extension UpdateController: ManualUpdateChecking {}
+
 private extension UpdateAutomaticReason {
     var logLabel: String {
         switch self {
