@@ -32,7 +32,6 @@ SCHEME="PeekBar"
 PROJECT="PeekBar.xcodeproj"
 DERIVED_DATA="build"
 STAGE_DIR="$ROOT_DIR/release"
-RELEASE_ARCH="arm64"
 DRY_RUN=0
 FORCE=0
 VERSION_ARG=""
@@ -271,112 +270,9 @@ prepare_stage() {
   mkdir -p "$STAGE_DIR"
 }
 
-verify_release_architecture() {
-  local binary archs relative
-  local unexpected=()
-
-  while IFS= read -r -d '' binary; do
-    if /usr/bin/file "$binary" | grep -q 'Mach-O'; then
-      archs="$(/usr/bin/lipo -archs "$binary" 2>/dev/null || true)"
-      if [[ "$archs" != "$RELEASE_ARCH" ]]; then
-        relative="${binary#$RELEASE_APP_PATH/}"
-        unexpected+=("$relative [$archs]")
-      fi
-    fi
-  done < <(/usr/bin/find "$RELEASE_APP_PATH" -type f -print0)
-
-  if [[ ${#unexpected[@]} -gt 0 ]]; then
-    echo "ERROR: release app contains non-${RELEASE_ARCH} Mach-O binaries:" >&2
-    printf '  - %s\n' "${unexpected[@]}" >&2
-    exit 1
-  fi
-
-  log "Verified release app contains ${RELEASE_ARCH}-only Mach-O binaries"
-}
-
-thin_release_architecture() {
-  local binary archs mode relative tmp
-  local thinned=()
-
-  while IFS= read -r -d '' binary; do
-    if ! /usr/bin/file "$binary" | grep -q 'Mach-O'; then
-      continue
-    fi
-
-    archs="$(/usr/bin/lipo -archs "$binary" 2>/dev/null || true)"
-    relative="${binary#$RELEASE_APP_PATH/}"
-    if [[ " $archs " != *" $RELEASE_ARCH "* ]]; then
-      fail "$relative does not contain required architecture $RELEASE_ARCH (found: ${archs:-unknown})"
-    fi
-
-    if [[ "$archs" == "$RELEASE_ARCH" ]]; then
-      continue
-    fi
-
-    mode="$(/usr/bin/stat -f '%Lp' "$binary")"
-    tmp="$(/usr/bin/mktemp "$binary.XXXXXX")"
-    if ! /usr/bin/lipo "$binary" -thin "$RELEASE_ARCH" -output "$tmp"; then
-      rm -f "$tmp"
-      fail "failed to thin $relative to $RELEASE_ARCH"
-    fi
-    chmod "$mode" "$tmp"
-    mv "$tmp" "$binary"
-    thinned+=("$relative")
-  done < <(/usr/bin/find "$RELEASE_APP_PATH" -type f -print0)
-
-  if [[ ${#thinned[@]} -gt 0 ]]; then
-    log "Thinned ${#thinned[@]} Mach-O binaries to ${RELEASE_ARCH}"
-  fi
-}
-
-resign_release_app() {
-  log "Re-signing thinned ${APP_NAME}.app"
-  /usr/bin/codesign \
-    --force \
-    --deep \
-    --sign "$PEEKBAR_SIGNING_IDENTITY" \
-    --preserve-metadata=identifier,entitlements,requirements,flags,runtime \
-    "$RELEASE_APP_PATH" \
-    || fail "failed to re-sign thinned ${APP_NAME}.app"
-
-  /usr/bin/codesign --verify --deep --strict "$RELEASE_APP_PATH" \
-    || fail "failed to verify signature for thinned ${APP_NAME}.app"
-}
-
 build_release_app() {
-  local products_dir="$ROOT_DIR/$DERIVED_DATA/Build/Products/Release"
-  local app_path="$products_dir/${APP_NAME}.app"
-  local xcodebuild_args
-
-  log "Building signed ${APP_NAME}.app (Release, ${RELEASE_ARCH} only)"
-  xcodegen generate
-
-  xcodebuild_args=(
-    -project "$PROJECT"
-    -scheme "$SCHEME"
-    -configuration Release
-    -derivedDataPath "$DERIVED_DATA"
-    CODE_SIGN_STYLE=Manual
-    CODE_SIGN_IDENTITY="$PEEKBAR_SIGNING_IDENTITY"
-    CODE_SIGNING_ALLOWED=YES
-    ARCHS="$RELEASE_ARCH"
-    EXCLUDED_ARCHS="x86_64"
-    ONLY_ACTIVE_ARCH=NO
-  )
-  if [[ -n "$PEEKBAR_DEVELOPMENT_TEAM" ]]; then
-    xcodebuild_args+=(DEVELOPMENT_TEAM="$PEEKBAR_DEVELOPMENT_TEAM")
-  fi
-  xcodebuild_args+=(
-    build
-  )
-
-  xcodebuild "${xcodebuild_args[@]}"
-
-  [[ -d "$app_path" ]] || fail "expected app bundle missing at $app_path"
-  RELEASE_APP_PATH="$app_path"
-  thin_release_architecture
-  resign_release_app
-  verify_release_architecture
+  RELEASE_APP_PATH="$("$ROOT_DIR/scripts/build-release.sh")"
+  [[ -d "$RELEASE_APP_PATH" ]] || fail "expected app bundle missing at $RELEASE_APP_PATH"
 }
 
 build_dry_run_app() {
