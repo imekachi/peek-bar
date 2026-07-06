@@ -3,6 +3,25 @@ import AppKit
 /// Builds the Toggle Icon right-click menu with native `NSMenu` items and separators.
 @MainActor
 enum StatusItemMenu {
+  private enum MenuGlyph {
+    static func symbol(_ name: String, accessibilityDescription: String) -> NSImage? {
+      let configuration = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+      guard let base = NSImage(systemSymbolName: name, accessibilityDescription: accessibilityDescription) else {
+        return nil
+      }
+      let image = base.withSymbolConfiguration(configuration) ?? base
+      image.isTemplate = true
+      return image
+    }
+
+    static let settings = symbol("gearshape", accessibilityDescription: "Settings")
+    static let checkForUpdates = symbol("arrow.down.circle", accessibilityDescription: "Check for updates")
+    static let about = symbol("info.circle", accessibilityDescription: "About")
+    static let quit = symbol("xmark.rectangle", accessibilityDescription: "Quit")
+    static let showAlwaysHidden = symbol("eye", accessibilityDescription: "Show Always Hidden Icons")
+    static let hideAlwaysHidden = symbol("eye.slash", accessibilityDescription: "Hide Always Hidden Icons")
+  }
+
   static func makeMenu(
     settings: SettingsStore,
     revealAlwaysHidden: (@MainActor () -> Void)? = nil,
@@ -25,6 +44,7 @@ enum StatusItemMenu {
       keyEquivalent: ""
     )
     alwaysHidden.target = target
+    alwaysHidden.image = MenuGlyph.showAlwaysHidden
     menu.addItem(alwaysHidden)
 
     let alwaysHiddenSeparator = NSMenuItem.separator()
@@ -37,6 +57,7 @@ enum StatusItemMenu {
       keyEquivalent: ","
     )
     settings.target = target
+    settings.image = MenuGlyph.settings
     menu.addItem(settings)
 
     let checkForUpdates = NSMenuItem(
@@ -45,6 +66,7 @@ enum StatusItemMenu {
       keyEquivalent: ""
     )
     checkForUpdates.target = target
+    checkForUpdates.image = MenuGlyph.checkForUpdates
     menu.addItem(checkForUpdates)
 
     let about = NSMenuItem(
@@ -53,6 +75,7 @@ enum StatusItemMenu {
       keyEquivalent: ""
     )
     about.target = target
+    about.image = MenuGlyph.about
     menu.addItem(about)
 
     menu.addItem(.separator())
@@ -63,6 +86,7 @@ enum StatusItemMenu {
       keyEquivalent: ""
     )
     quit.target = target
+    quit.image = MenuGlyph.quit
     menu.addItem(quit)
 
     target.alwaysHiddenItem = alwaysHidden
@@ -104,6 +128,9 @@ enum StatusItemMenu {
       alwaysHiddenItem?.title = settings.isAlwaysHiddenRevealed
         ? "Hide Always Hidden Icons"
         : "Show Always Hidden Icons"
+      alwaysHiddenItem?.image = settings.isAlwaysHiddenRevealed
+        ? MenuGlyph.hideAlwaysHidden
+        : MenuGlyph.showAlwaysHidden
     }
 
     func menuWillOpen(_ menu: NSMenu) {

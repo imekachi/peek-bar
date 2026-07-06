@@ -36,6 +36,7 @@ macOS menu bars get cluttered with icons. Users want a one-click way to hide the
   - Group 2: "Settings", "Check for updates…", "About".
   - Group 3: "Quit".
   - Menu labels carry no app-name suffix (e.g., "Quit", not "Quit PeekBar").
+  - Every menu item shows a leading glyph: SF Symbols (template, 13pt) for all actions including About (`info.circle`) and Quit (`xmark.rectangle`). Do not use the application icon on menu rows.
 - "Settings" opens the Settings window (see 0002).
 - "About" shows basic app info (name and version; version detail per 0007).
 - "Quit" terminates PeekBar and removes its menu-bar icons.
