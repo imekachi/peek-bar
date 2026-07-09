@@ -7,6 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/platform-macOS-lightgrey.svg" alt="platform">
   <img src="https://img.shields.io/badge/requirement-macOS%2026.0%2B-blue.svg" alt="requirement">
+  <img src="https://img.shields.io/badge/license-PolyForm%20Shield%201.0.0-orange.svg" alt="license">
 </p>
 
 ## Overview
@@ -44,3 +45,9 @@ Right-click the menu-bar item to open Settings and configure launch behavior, au
 ## Requirement
 
 macOS version >= 26.0
+
+## License
+
+PeekBar is source-available under the [PolyForm Shield License 1.0.0](LICENSE.md).
+
+You're free to use, modify, and share it for any purpose — **except** using it to build a product that competes with PeekBar (for example, cloning it, rebranding it, and selling it). See [LICENSE.md](LICENSE.md) for the full terms.
