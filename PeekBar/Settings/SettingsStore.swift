@@ -47,8 +47,17 @@ final class SettingsStore: ObservableObject {
     }
 
     @Published var launchAtLogin: Bool {
-        didSet { userDefaults.set(launchAtLogin, forKey: Key.launchAtLogin) }
+        didSet {
+            userDefaults.set(launchAtLogin, forKey: Key.launchAtLogin)
+            launchAtLoginChanges.send(launchAtLogin)
+        }
     }
+
+    /// Fires in `didSet` timing (after the backing store is updated), unlike `$launchAtLogin`
+    /// which publishes in `willSet` timing. Used by `LaunchAtLoginController` so its
+    /// error-path resync (a re-entrant write from within the observation) becomes the final
+    /// stored value instead of being clobbered by the outer write completing afterwards.
+    let launchAtLoginChanges = PassthroughSubject<Bool, Never>()
 
     @Published var autoCollapseInterval: AutoCollapseInterval {
         didSet { userDefaults.set(autoCollapseInterval.rawValue, forKey: Key.autoCollapseInterval) }
