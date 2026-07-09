@@ -4,9 +4,17 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = SettingsStore()
     private lazy var updateController = UpdateController(settings: settings)
+    private lazy var launchAtLoginController = LaunchAtLoginController(
+        settings: settings,
+        loginItem: SMAppServiceLoginItem()
+    )
     private lazy var settingsController = SettingsWindowController(
         settings: settings,
         manualUpdateChecker: updateController
+    )
+    private lazy var settingsPresenter = LaunchAtLoginReconcilingSettingsPresenter(
+        launchAtLoginController: launchAtLoginController,
+        settingsController: settingsController
     )
     private var statusBarController: StatusBarController?
 
@@ -15,11 +23,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ApplicationIcon.register()
         StartupLog.emit("PeekBar: launched")
 
+        let isFirstLaunch = !settings.hasLaunchedBefore
         updateController.start()
+        launchAtLoginController.start(isFirstLaunch: isFirstLaunch)
 
         let statusBar = StatusBarController(
             settings: settings,
-            settingsController: settingsController,
+            settingsPresenter: settingsPresenter,
             manualUpdateChecker: updateController
         )
         statusBarController = statusBar
@@ -28,8 +38,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar.runSelfTestIfRequested()
         #endif
 
-        if !settings.hasLaunchedBefore {
-            settingsController.show()
+        if isFirstLaunch {
+            settingsPresenter.show()
             StartupLog.emit("PeekBar: settings auto-opened (first launch)")
             settings.hasLaunchedBefore = true
         }
@@ -42,6 +52,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         StartupLog.emit("PeekBar: terminating — icons restored")
     }
 
+}
+
+@MainActor
+private final class LaunchAtLoginReconcilingSettingsPresenter: SettingsPresenting {
+    private let launchAtLoginController: LaunchAtLoginController
+    private let settingsController: SettingsWindowController
+
+    init(
+        launchAtLoginController: LaunchAtLoginController,
+        settingsController: SettingsWindowController
+    ) {
+        self.launchAtLoginController = launchAtLoginController
+        self.settingsController = settingsController
+    }
+
+    func show() {
+        launchAtLoginController.reconcile()
+        settingsController.show()
+    }
 }
 
 @MainActor

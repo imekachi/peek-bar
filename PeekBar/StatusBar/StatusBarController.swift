@@ -82,7 +82,7 @@ final class StatusBarController: NSObject {
 
   init(
     settings: SettingsStore,
-    settingsController: SettingsWindowController,
+    settingsPresenter: SettingsPresenting,
     manualUpdateChecker: ManualUpdateChecking,
     autoCollapseScheduler: AutoCollapseTimerScheduling = SystemAutoCollapseTimerScheduler(),
     hideStrategyFactory: HideStrategyFactory = { separatorItem, toggleItem in
@@ -121,7 +121,7 @@ final class StatusBarController: NSObject {
       hideAlwaysHidden: { [weak self] in
         self?.hideAlwaysHidden()
       },
-      settingsPresenter: settingsController,
+      settingsPresenter: settingsPresenter,
       manualUpdateChecker: manualUpdateChecker
     )
     contextMenu = menuBundle.menu
