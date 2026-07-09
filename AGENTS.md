@@ -17,6 +17,7 @@ During planning, always consider this skill for the verification step: when a ta
 ## Keep spec in sync
 - Any requested behavioral change by user should update existing spec as well.
 - The spec should contain the intention, direction, expected experience, it should not contain detail code or implementation.
+- Implementation limitations that deviate from spec follow `se-exec`'s limitation-escalation step (§6e) — spec + ADR update, and the user is always told, whether via the human-in-the-loop gate or as a called-out amendment in the PR.
 
 
 ## Design Context
