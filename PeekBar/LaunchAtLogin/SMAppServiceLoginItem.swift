@@ -1,0 +1,17 @@
+import ServiceManagement
+
+/// Production `LoginItemManaging` adapter around `SMAppService.mainApp`.
+@MainActor
+final class SMAppServiceLoginItem: LoginItemManaging {
+    var isEnabled: Bool {
+        SMAppService.mainApp.status == .enabled
+    }
+
+    func enable() throws {
+        try SMAppService.mainApp.register()
+    }
+
+    func disable() throws {
+        try SMAppService.mainApp.unregister()
+    }
+}
